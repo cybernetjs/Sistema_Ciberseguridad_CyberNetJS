@@ -1,0 +1,34 @@
+# --- Datasets (pesados, no se versionan) ---
+datasets/raw/
+datasets/*.csv
+datasets/*.zip
+
+# --- Modelos entrenados grandes (usar Git LFS o releases si son >50MB) ---
+models/*.bin
+
+# --- Python (ml-training) ---
+__pycache__/
+*.pyc
+.venv/
+venv/
+*.ipynb_checkpoints/
+
+# --- C / C++ (capture-engine, inference-service) ---
+build/
+*.o
+*.obj
+*.exe
+*.out
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+
+# --- C# / WinUI (dashboard-winui) ---
+bin/
+obj/
+*.user
+.vs/
+
+# --- General ---
+.DS_Store
+*.log
