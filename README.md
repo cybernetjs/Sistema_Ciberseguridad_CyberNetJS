@@ -1,51 +1,53 @@
-# IDS/IPS basado en Aprendizaje Automático para redes domésticas con IoT
+# IDS/IPS basado en Aprendizaje Automatico para redes domesticas con IoT
 
-Tesis: *Sistema basado en Aprendizaje Automático para la detección de intrusiones en
-redes domésticas que integran dispositivos IoT en hogares del Perú - 2026*
-Universidad Nacional del Centro del Perú — Facultad de Ingeniería de Sistemas
+Tesis: *Sistema basado en Aprendizaje Automatico para la deteccion de intrusiones en
+redes domesticas que integran dispositivos IoT en hogares del Peru - 2026*
+Universidad Nacional del Centro del Peru — Facultad de Ingenieria de Sistemas
 
-## Arquitectura
+## Arquitectura general
 
 ```
 [Dispositivos IoT] --- [Router Archer AX12] --- [Raspberry Pi 5 - modo bridge]
                                                         |
-                                          captura de paquetes (libpcap)
+                                          agente-captura (libpcap)
                                                         |
-                                        socket TCP :9999 (inference-service)
+                                        socket TCP :9999 (servicio-inferencia)
                                                         |
-                                 detección por firmas + modelo XGBoost/ONNX
+                                 deteccion por firmas + modelo de clasificacion entrenado
                                                         |
-                                                    alerta -> dashboard-winui
+                                                    alerta -> panel-control
 ```
 
 ## Estructura del repositorio
 
 | Carpeta | Lenguaje | Contenido |
 |---|---|---|
-| `capture-engine/` | C / C++ | Captura de paquetes en la Raspberry Pi (libpcap), modo bridge |
-| `ml-training/` | Python | Preprocesamiento, SMOTE, selección de características, entrenamiento XGBoost |
-| `inference-service/` | C++ | Servidor TCP puerto 9999, detección por firmas + inferencia del modelo |
-| `dashboard-winui/` | C# / WinUI | Aplicación de escritorio: monitoreo en tiempo real, métricas, alertas |
-| `models/` | - | Modelos entrenados exportados (`.json` de XGBoost o `.onnx`) |
-| `datasets/` | Python/scripts | Descarga y preparación de CICIoT2023 e IoT-23 (los datasets NO se versionan) |
-| `docs/` | - | Plan de tesis, diagramas, resultados experimentales |
+| `agente-captura/` | C / C++ | Captura de trafico real en la Raspberry Pi (libpcap), modo bridge |
+| `servicio-inferencia/` | C++ | Servidor TCP puerto 9999, deteccion por firmas + inferencia del modelo |
+| `nucleo-compartido/` | C / C++ | Entidad de dominio, bitacora, control de apagado y compatibilidad de sockets usados por ambos ejecutables |
+| `dependencias-externas/` | C++ | Libreria JSON de terceros (nlohmann/json), vendorizada como header-only |
+| `entrenamiento-modelos/` | Python | Preprocesamiento, SMOTE, seleccion de caracteristicas, entrenamiento del modelo de clasificacion |
+| `servicio-inferencia/` → `modelos-entrenados/` | - | Modelos de clasificacion entrenados y exportados (formato XGBoost nativo u ONNX) |
+| `datasets/` | Python/scripts | Descarga y preparacion de CICIoT2023 e IoT-23 (los datasets NO se versionan) |
+| `panel-control/` | C# / WinUI | Aplicacion de escritorio: monitoreo en tiempo real, metricas, alertas |
+| `documentacion/` | - | Guia de instalacion, plan de tesis, resultados experimentales |
 
-## Metodología (CRISP-DM)
+## Metodologia (CRISP-DM)
 
-1. Comprensión del problema — ver `docs/plan-tesis.pdf`
-2. Comprensión de los datos — `datasets/`
-3. Preparación de datos — `ml-training/preprocessing/`
-4. Modelado — `ml-training/train_xgboost.py`
-5. Evaluación — `docs/resultados/`
-6. Despliegue — `capture-engine/` + `inference-service/` sobre Raspberry Pi 5
+1. Comprension del problema — ver `documentacion/plan-tesis.pdf`
+2. Comprension de los datos — `datasets/`
+3. Preparacion de datos — `entrenamiento-modelos/preprocesamiento/`
+4. Modelado — `entrenamiento-modelos/entrenar_xgboost.py`
+5. Evaluacion — `documentacion/resultados/`
+6. Despliegue — `agente-captura/` + `servicio-inferencia/` sobre Raspberry Pi 5
 
-## Cómo empezar
+## Como empezar
 
-Ver `docs/setup.md` para la puesta en marcha del entorno de desarrollo.
+Ver `documentacion/guia-instalacion.md` para la puesta en marcha del entorno de desarrollo.
 
 ## Autores
 
-- Huaynate Achachau, José Luis
-- Araujo Champi, José Eduardo
+- Huaynate Achachau, Jose Luis
+- Araujo Champi, Jose Eduardo
 
 Asesor: Dr. Maquera Quispe, Henry George
