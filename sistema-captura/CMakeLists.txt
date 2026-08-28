@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(agente_captura LANGUAGES CXX)
+project(sistema_captura LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -17,7 +17,7 @@ endif()
 
 set(RAIZ_PROYECTO ${CMAKE_CURRENT_SOURCE_DIR}/..)
 
-add_executable(agente_captura
+add_executable(sistema_captura
     punto_entrada/principal.cpp
     dominio/rastreador_flujos.cpp
     captura/capturador_paquetes.cpp
@@ -29,7 +29,7 @@ add_executable(agente_captura
     ${RAIZ_PROYECTO}/nucleo-compartido/ejecucion/controlador_apagado.cpp
 )
 
-target_include_directories(agente_captura PRIVATE
+target_include_directories(sistema_captura PRIVATE
     ${PCAP_INCLUDE_DIR}
     dominio
     captura
@@ -44,7 +44,7 @@ target_include_directories(agente_captura PRIVATE
     ${RAIZ_PROYECTO}/nucleo-compartido/tiempo
 )
 
-target_link_libraries(agente_captura PRIVATE ${PCAP_LIBRARY} pthread)
+target_link_libraries(sistema_captura PRIVATE ${PCAP_LIBRARY} pthread)
 
 message(STATUS "libpcap include: ${PCAP_INCLUDE_DIR}")
 message(STATUS "libpcap library: ${PCAP_LIBRARY}")

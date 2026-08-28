@@ -1,4 +1,4 @@
-# agente-captura (C++)
+# sistema-captura (C++)
 
 Corre en la Raspberry Pi 5, captura trafico real con `libpcap`, extrae
 caracteristicas de red por paquete y las envia por TCP en JSON hacia el
@@ -35,7 +35,7 @@ header en `dependencias-externas/nlohmann/json.hpp`.
 ## Compilar
 
 ```bash
-cd agente-captura
+cd sistema-captura
 mkdir -p build && cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release
 make
@@ -44,12 +44,12 @@ make
 ## Ejecutar (requiere privilegios para captura raw)
 
 ```bash
-sudo ./build/agente_captura <ip_destino> [puerto=9999]
+sudo ./build/sistema_captura <ip_destino> [puerto=9999]
 ```
 
 Ejemplo:
 ```bash
-sudo ./build/agente_captura 192.168.1.50
+sudo ./build/sistema_captura 192.168.1.50
 ```
 
 Detener con `Ctrl+C` (SIGINT) o `SIGTERM`: hace el envio final del lote
