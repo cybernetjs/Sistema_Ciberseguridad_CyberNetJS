@@ -2,6 +2,9 @@ datasets/crudo/
 datasets/*.csv
 datasets/*.zip
 
+# Trafico de laboratorio registrado por servicio-inferencia/persistencia/RegistradorCsv
+servicio-inferencia/**/*.csv
+
 modelos-entrenados/*.bin
 
 __pycache__/

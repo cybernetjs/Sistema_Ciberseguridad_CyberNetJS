@@ -10,6 +10,7 @@
 #include "detector_aprendizaje_automatico.h"
 #include "detector_firmas.h"
 #include "notificador_consola.h"
+#include "registrador_csv.h"
 #include "servidor_tcp.h"
 
 namespace {
@@ -18,11 +19,13 @@ constexpr int PUERTO_POR_DEFECTO = 9999;
 constexpr int UMBRAL_INUNDACION_PPS = 100;
 constexpr double VENTANA_INUNDACION_SEGUNDOS = 1.0;
 constexpr size_t FRECUENCIA_REPORTE_ESTADO = 100;
+constexpr const char* RUTA_CSV_POR_DEFECTO = "eventos_procesados.csv";
 
 }
 
 int main(int argc, char** argv) {
     int puerto = (argc >= 2) ? std::atoi(argv[1]) : PUERTO_POR_DEFECTO;
+    std::string ruta_csv = (argc >= 3) ? argv[2] : RUTA_CSV_POR_DEFECTO;
 
     if (!sdi::inicializar_sockets()) {
         sdi::Bitacora::instancia().registrar_error("No se pudo inicializar la capa de sockets del sistema.");
@@ -41,7 +44,9 @@ int main(int argc, char** argv) {
     sdi::DetectorFirmas detector_firmas(UMBRAL_INUNDACION_PPS, VENTANA_INUNDACION_SEGUNDOS);
     sdi::DetectorAprendizajeAutomatico detector_aprendizaje_automatico;
     sdi::NotificadorConsola notificador;
-    sdi::CanalizadorEventos canalizador({&detector_firmas, &detector_aprendizaje_automatico}, notificador);
+    sdi::RegistradorCsv registrador(ruta_csv);
+    sdi::CanalizadorEventos canalizador({&detector_firmas, &detector_aprendizaje_automatico}, notificador,
+                                         registrador);
 
     sdi::Bitacora::instancia().registrar_info("Servicio de inferencia escuchando en el puerto " + std::to_string(puerto));
     sdi::Bitacora::instancia().registrar_info("Detectores activos: firmas (umbral flood " +

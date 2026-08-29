@@ -17,6 +17,7 @@ add_executable(servicio_inferencia
     deteccion/detector_firmas.cpp
     deteccion/detector_aprendizaje_automatico.cpp
     notificacion/notificador_consola.cpp
+    persistencia/registrador_csv.cpp
     aplicacion/canalizador_eventos.cpp
     ${RAIZ_PROYECTO}/nucleo-compartido/diagnostico/bitacora.cpp
     ${RAIZ_PROYECTO}/nucleo-compartido/ejecucion/controlador_apagado.cpp
@@ -26,6 +27,7 @@ target_include_directories(servicio_inferencia PRIVATE
     dominio
     deteccion
     notificacion
+    persistencia
     transporte
     aplicacion
     ${RAIZ_PROYECTO}/dependencias-externas
@@ -39,5 +41,5 @@ target_include_directories(servicio_inferencia PRIVATE
 if(WIN32)
     target_link_libraries(servicio_inferencia PRIVATE ws2_32)
 else()
-    target_link_libraries(servicio_inferencia PRIVATE pthread)
+    target_link_libraries(servicio_inferencia PRIVATE pthread stdc++fs)
 endif()

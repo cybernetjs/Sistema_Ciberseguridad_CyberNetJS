@@ -9,7 +9,7 @@ Universidad Nacional del Centro del Peru — Facultad de Ingenieria de Sistemas
 ```
 [Dispositivos IoT] --- [Router Archer AX12] --- [Raspberry Pi 5 - modo bridge]
                                                         |
-                                          agente-captura (libpcap)
+                                          sistema-captura (libpcap)
                                                         |
                                         socket TCP :9999 (servicio-inferencia)
                                                         |
@@ -22,7 +22,7 @@ Universidad Nacional del Centro del Peru — Facultad de Ingenieria de Sistemas
 
 | Carpeta | Lenguaje | Contenido |
 |---|---|---|
-| `agente-captura/` | C / C++ | Captura de trafico real en la Raspberry Pi (libpcap), modo bridge |
+| `sistema-captura/` | C / C++ | Captura de trafico real en la Raspberry Pi (libpcap), modo bridge |
 | `servicio-inferencia/` | C++ | Servidor TCP puerto 9999, deteccion por firmas + inferencia del modelo |
 | `nucleo-compartido/` | C / C++ | Entidad de dominio, bitacora, control de apagado y compatibilidad de sockets usados por ambos ejecutables |
 | `dependencias-externas/` | C++ | Libreria JSON de terceros (nlohmann/json), vendorizada como header-only |
@@ -39,7 +39,7 @@ Universidad Nacional del Centro del Peru — Facultad de Ingenieria de Sistemas
 3. Preparacion de datos — `entrenamiento-modelos/preprocesamiento/`
 4. Modelado — `entrenamiento-modelos/entrenar_xgboost.py`
 5. Evaluacion — `documentacion/resultados/`
-6. Despliegue — `agente-captura/` + `servicio-inferencia/` sobre Raspberry Pi 5
+6. Despliegue — `sistema-captura/` + `servicio-inferencia/` sobre Raspberry Pi 5
 
 ## Como empezar
 

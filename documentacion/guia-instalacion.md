@@ -5,7 +5,7 @@
 | Componente | Herramientas |
 |---|---|
 | `entrenamiento-modelos` | Python 3.10+, `pip install -r requirements.txt` |
-| `agente-captura` / `servicio-inferencia` | GCC/Clang con C++17, CMake, `libpcap-dev` |
+| `sistema-captura` / `servicio-inferencia` | GCC/Clang con C++17, CMake, `libpcap-dev` |
 | `panel-control` | Windows 11, Visual Studio 2022 con carga de trabajo "Windows App SDK" |
 | Raspberry Pi 5 | Raspberry Pi OS (64-bit), configurada en modo bridge |
 
@@ -21,7 +21,7 @@ cd sistema-deteccion-intrusiones-iot
 1. `datasets/` → descargar y explorar CICIoT2023 e IoT-23
 2. `entrenamiento-modelos/` → preprocesar, aplicar SMOTE, entrenar el modelo de clasificacion, exportar a `modelos-entrenados/`
 3. `servicio-inferencia/` → servidor TCP puerto 9999 + carga del modelo entrenado
-4. `agente-captura/` → captura real de paquetes en la Raspberry Pi (modo bridge)
+4. `sistema-captura/` → captura real de paquetes en la Raspberry Pi (modo bridge)
 5. `panel-control/` → cliente de monitoreo conectado al `servicio-inferencia`
 
 ## 4. Configuracion de la Raspberry Pi 5 en modo bridge (referencia rapida)
