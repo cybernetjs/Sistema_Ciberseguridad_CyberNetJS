@@ -26,9 +26,13 @@ from preprocesamiento import (
 )
 
 
-def entrenar(ruta_datos, columna_etiqueta, etiqueta_benigna, k_caracteristicas, ruta_salida, binario):
+def entrenar(ruta_datos, columna_etiqueta, etiqueta_benigna, k_caracteristicas, ruta_salida, binario, columnas_excluir):
     df = cargar_dataset(ruta_datos)
     df = limpiar(df, columna_etiqueta)
+
+    if columnas_excluir:
+        columnas_a_quitar = [c.strip() for c in columnas_excluir.split(",") if c.strip() in df.columns]
+        df = df.drop(columns=columnas_a_quitar)
 
     if binario:
         etiquetas = separar_binario(df[columna_etiqueta], etiqueta_benigna)
@@ -91,6 +95,7 @@ def entrenar(ruta_datos, columna_etiqueta, etiqueta_benigna, k_caracteristicas, 
 
     carpeta_salida = os.path.dirname(ruta_salida) or "."
     os.makedirs(carpeta_salida, exist_ok=True)
+    prefijo = os.path.splitext(os.path.basename(ruta_salida))[0]
 
     modelo.save_model(ruta_salida)
 
@@ -103,10 +108,10 @@ def entrenar(ruta_datos, columna_etiqueta, etiqueta_benigna, k_caracteristicas, 
             "codificador": codificador,
             "binario": binario,
         },
-        os.path.join(carpeta_salida, "preprocesamiento.joblib"),
+        os.path.join(carpeta_salida, f"{prefijo}_preprocesamiento.joblib"),
     )
 
-    with open(os.path.join(carpeta_salida, "metricas.json"), "w", encoding="utf-8") as archivo:
+    with open(os.path.join(carpeta_salida, f"{prefijo}_metricas.json"), "w", encoding="utf-8") as archivo:
         json.dump(metricas, archivo, indent=2, ensure_ascii=False)
 
     return modelo, metricas
@@ -116,6 +121,7 @@ def construir_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("--datos", required=True)
     parser.add_argument("--etiqueta", default="label")
+    parser.add_argument("--excluir", default="")
     parser.add_argument("--benigna", default="BenignTraffic")
     parser.add_argument("--k", type=int, default=15)
     parser.add_argument("--salida", default="../modelos-entrenados/modelo.json")
@@ -132,4 +138,5 @@ if __name__ == "__main__":
         argumentos.k,
         argumentos.salida,
         argumentos.binario,
+        argumentos.excluir,
     )

@@ -1,0 +1,40 @@
+{
+  "accuracy": 0.9788262057788806,
+  "precision": 0.9847675989711117,
+  "recall": 0.9788262057788806,
+  "f1_score": 0.9806090810211905,
+  "matriz_confusion": [
+    [
+      40586,
+      1418
+    ],
+    [
+      19617,
+      931824
+    ]
+  ],
+  "tiempo_prediccion_ms_por_registro": 0.000804962529363902,
+  "clases": [
+    "benigno",
+    "ataque"
+  ],
+  "caracteristicas_seleccionadas": [
+    "Header_Length",
+    "Time_To_Live",
+    "Rate",
+    "syn_flag_number",
+    "ack_flag_number",
+    "syn_count",
+    "HTTPS",
+    "TCP",
+    "ICMP",
+    "Tot sum",
+    "Max",
+    "AVG",
+    "Std",
+    "Tot size",
+    "Number"
+  ],
+  "total_registros_entrenamiento": 7611524,
+  "total_registros_prueba": 993445
+}

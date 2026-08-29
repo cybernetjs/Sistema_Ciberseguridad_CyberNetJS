@@ -1,0 +1,32 @@
+{
+  "accuracy": 0.9985324377361738,
+  "precision": 0.9985503329427807,
+  "recall": 0.9985324377361738,
+  "f1_score": 0.9985367900021007,
+  "matriz_confusion": [
+    [
+      123572,
+      129
+    ],
+    [
+      1781,
+      1175996
+    ]
+  ],
+  "tiempo_prediccion_ms_por_registro": 0.000392199714461801,
+  "clases": [
+    "benigno",
+    "ataque"
+  ],
+  "caracteristicas_seleccionadas": [
+    "id.orig_p",
+    "id.resp_p",
+    "missed_bytes",
+    "orig_pkts",
+    "orig_ip_bytes",
+    "resp_pkts",
+    "resp_ip_bytes"
+  ],
+  "total_registros_entrenamiento": 9422210,
+  "total_registros_prueba": 1301478
+}
