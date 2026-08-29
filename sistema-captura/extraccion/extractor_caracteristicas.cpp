@@ -92,21 +92,27 @@ std::optional<EventoRed> extraer_caracteristicas(const uint8_t* paquete,
     const uint8_t* inicio_capa4 = inicio_ip + longitud_cabecera_ip;
     uint32_t disponible_capa4 = disponible_ip - longitud_cabecera_ip;
 
+    int puerto_origen = 1;
     int puerto_destino = 1;
     if ((protocolo == IPPROTO_TCP || protocolo == IPPROTO_UDP) && disponible_capa4 >= 4) {
+        puerto_origen = leer_entero16_big_endian(inicio_capa4);
         puerto_destino = leer_entero16_big_endian(inicio_capa4 + 2);
     }
 
     double instante_actual = tiempo::segundos_actuales();
-    ClaveFlujo clave{buffer_origen, buffer_destino, puerto_destino, protocolo};
-    double duracion = rastreador.actualizar_y_obtener_duracion(clave, instante_actual);
-
     int longitud_paquete = static_cast<int>(longitud_capturada);
+
+    ResultadoFlujo resultado_flujo = rastreador.actualizar_flujo(
+        buffer_origen, puerto_origen, buffer_destino, puerto_destino,
+        protocolo, longitud_paquete, instante_actual);
+
     int ttl_origen = cabecera_ip->ip_ttl;
+    double duracion = resultado_flujo.duracion;
 
     EventoRed evento;
     evento.ip_origen = buffer_origen;
     evento.ip_destino = buffer_destino;
+    evento.puerto_origen = puerto_origen;
     evento.puerto_destino = puerto_destino;
     evento.protocolo = protocolo;
     evento.duracion = duracion;
@@ -125,6 +131,11 @@ std::optional<EventoRed> extraer_caracteristicas(const uint8_t* paquete,
     evento.fluctuacion_destino = 0.0;
     evento.conteo_servicio_origen = 1;
     evento.conteo_destino_reciente = 1;
+    evento.orig_pkts_flujo = resultado_flujo.orig_pkts;
+    evento.orig_ip_bytes_flujo = resultado_flujo.orig_ip_bytes;
+    evento.resp_pkts_flujo = resultado_flujo.resp_pkts;
+    evento.resp_ip_bytes_flujo = resultado_flujo.resp_ip_bytes;
+    evento.missed_bytes = 0;
 
     return evento;
 }
