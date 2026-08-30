@@ -8,7 +8,11 @@
 #include "controlador_apagado.h"
 #include "decodificador_eventos_json.h"
 #include "detector_aprendizaje_automatico.h"
+#include "detector_beaconing.h"
+#include "detector_dga.h"
 #include "detector_firmas.h"
+#include "detector_fuerza_bruta.h"
+#include "detector_reconocimiento.h"
 #include "notificador_consola.h"
 #include "registrador_csv.h"
 #include "servidor_tcp.h"
@@ -18,6 +22,16 @@ namespace {
 constexpr int PUERTO_POR_DEFECTO = 9999;
 constexpr int UMBRAL_INUNDACION_PPS = 300;
 constexpr double VENTANA_INUNDACION_SEGUNDOS = 1.0;
+constexpr int UMBRAL_PUERTOS_ESCANEO = 15;
+constexpr double VENTANA_ESCANEO_SEGUNDOS = 5.0;
+constexpr int UMBRAL_INTENTOS_FUERZA_BRUTA = 8;
+constexpr double VENTANA_FUERZA_BRUTA_SEGUNDOS = 10.0;
+constexpr int UMBRAL_DOMINIOS_DGA = 6;
+constexpr double VENTANA_DGA_SEGUNDOS = 30.0;
+constexpr int MINIMO_REPETICIONES_BEACON = 5;
+constexpr double INTERVALO_MIN_BEACON_SEGUNDOS = 5.0;
+constexpr double INTERVALO_MAX_BEACON_SEGUNDOS = 180.0;
+constexpr double VARIACION_MAXIMA_BEACON = 0.35;
 constexpr size_t FRECUENCIA_REPORTE_ESTADO = 100;
 constexpr const char* RUTA_CSV_POR_DEFECTO = "eventos_procesados.csv";
 constexpr const char* RUTA_MODELO_POR_DEFECTO = "modelo_iot23_arboles.json";
@@ -43,6 +57,11 @@ int main(int argc, char** argv) {
         return 1;
     }
 
+    sdi::DetectorReconocimiento detector_reconocimiento(UMBRAL_PUERTOS_ESCANEO, VENTANA_ESCANEO_SEGUNDOS);
+    sdi::DetectorFuerzaBruta detector_fuerza_bruta(UMBRAL_INTENTOS_FUERZA_BRUTA, VENTANA_FUERZA_BRUTA_SEGUNDOS);
+    sdi::DetectorDga detector_dga(UMBRAL_DOMINIOS_DGA, VENTANA_DGA_SEGUNDOS);
+    sdi::DetectorBeaconing detector_beaconing(MINIMO_REPETICIONES_BEACON, INTERVALO_MIN_BEACON_SEGUNDOS,
+                                               INTERVALO_MAX_BEACON_SEGUNDOS, VARIACION_MAXIMA_BEACON);
     sdi::DetectorFirmas detector_firmas(UMBRAL_INUNDACION_PPS, VENTANA_INUNDACION_SEGUNDOS);
     sdi::DetectorAprendizajeAutomatico detector_aprendizaje_automatico;
 
@@ -55,14 +74,16 @@ int main(int argc, char** argv) {
 
     sdi::NotificadorConsola notificador;
     sdi::RegistradorCsv registrador(ruta_csv);
-    sdi::CanalizadorEventos canalizador({&detector_firmas, &detector_aprendizaje_automatico}, notificador,
-                                         registrador);
+    sdi::CanalizadorEventos canalizador(
+        {&detector_reconocimiento, &detector_fuerza_bruta, &detector_dga, &detector_beaconing, &detector_firmas,
+         &detector_aprendizaje_automatico},
+        notificador, registrador);
 
     sdi::Bitacora::instancia().registrar_info("Servicio de inferencia escuchando en el puerto " + std::to_string(puerto));
-    sdi::Bitacora::instancia().registrar_info("Detectores activos: firmas (umbral flood " +
-                                               std::to_string(UMBRAL_INUNDACION_PPS) +
-                                               " pps) + aprendizaje automatico (" +
-                                               std::string(modelo_cargado ? "modelo cargado" : "sin modelo") + ")");
+    sdi::Bitacora::instancia().registrar_info(
+        "Detectores activos: reconocimiento, fuerza_bruta, dga, beaconing, firmas (umbral flood " +
+        std::to_string(UMBRAL_INUNDACION_PPS) + " pps), aprendizaje automatico (" +
+        std::string(modelo_cargado ? "modelo cargado" : "sin modelo") + ")");
 
     servidor.ejecutar([&](const std::string& linea) {
         auto eventos = sdi::decodificar_eventos(linea);

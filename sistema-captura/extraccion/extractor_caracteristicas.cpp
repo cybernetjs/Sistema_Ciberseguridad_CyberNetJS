@@ -44,6 +44,45 @@ InformacionCapaEnlace informacion_capa_enlace(int tipo_enlace) {
 
 constexpr uint16_t ETHERTYPE_IP = 0x0800;
 
+std::string analizar_consulta_dns(const uint8_t* base, uint32_t disponible) {
+    if (disponible < 13) {
+        return "";
+    }
+
+    const uint8_t* cursor = base + 12;
+    uint32_t restante = disponible - 12;
+    std::string dominio;
+    int etiquetas = 0;
+
+    while (restante > 0 && etiquetas < 30) {
+        uint8_t longitud = cursor[0];
+        if (longitud == 0) {
+            break;
+        }
+        if ((longitud & 0xC0) == 0xC0) {
+            return "";
+        }
+        if (restante < static_cast<uint32_t>(longitud) + 1) {
+            return "";
+        }
+        if (!dominio.empty()) {
+            dominio += ".";
+        }
+        for (uint8_t i = 0; i < longitud; i++) {
+            char c = static_cast<char>(cursor[1 + i]);
+            if (!std::isalnum(static_cast<unsigned char>(c)) && c != '-') {
+                return "";
+            }
+            dominio += c;
+        }
+        cursor += longitud + 1;
+        restante -= longitud + 1;
+        etiquetas++;
+    }
+
+    return dominio;
+}
+
 }
 
 std::optional<EventoRed> extraer_caracteristicas(const uint8_t* paquete,
@@ -99,6 +138,13 @@ std::optional<EventoRed> extraer_caracteristicas(const uint8_t* paquete,
         puerto_destino = leer_entero16_big_endian(inicio_capa4 + 2);
     }
 
+    std::string consulta_dns;
+    if (protocolo == IPPROTO_UDP && puerto_destino == 53 && disponible_capa4 >= 8) {
+        const uint8_t* inicio_udp_payload = inicio_capa4 + 8;
+        uint32_t disponible_udp_payload = disponible_capa4 - 8;
+        consulta_dns = analizar_consulta_dns(inicio_udp_payload, disponible_udp_payload);
+    }
+
     double instante_actual = tiempo::segundos_actuales();
     int longitud_paquete = static_cast<int>(longitud_capturada);
 
@@ -136,6 +182,7 @@ std::optional<EventoRed> extraer_caracteristicas(const uint8_t* paquete,
     evento.resp_pkts_flujo = resultado_flujo.resp_pkts;
     evento.resp_ip_bytes_flujo = resultado_flujo.resp_ip_bytes;
     evento.missed_bytes = 0;
+    evento.consulta_dns = consulta_dns;
 
     return evento;
 }

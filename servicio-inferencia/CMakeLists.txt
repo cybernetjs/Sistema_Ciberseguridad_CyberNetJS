@@ -16,6 +16,10 @@ add_executable(servicio_inferencia
     transporte/decodificador_eventos_json.cpp
     deteccion/detector_firmas.cpp
     deteccion/detector_aprendizaje_automatico.cpp
+    deteccion/detector_reconocimiento.cpp
+    deteccion/detector_fuerza_bruta.cpp
+    deteccion/detector_dga.cpp
+    deteccion/detector_beaconing.cpp
     notificacion/notificador_consola.cpp
     persistencia/registrador_csv.cpp
     aplicacion/canalizador_eventos.cpp
