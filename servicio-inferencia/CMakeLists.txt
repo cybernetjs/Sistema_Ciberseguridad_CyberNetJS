@@ -23,6 +23,7 @@ add_executable(servicio_inferencia
     notificacion/notificador_consola.cpp
     persistencia/registrador_csv.cpp
     aplicacion/canalizador_eventos.cpp
+    aplicacion/lanzador_panel_control.cpp
     ${RAIZ_PROYECTO}/nucleo-compartido/diagnostico/bitacora.cpp
     ${RAIZ_PROYECTO}/nucleo-compartido/ejecucion/controlador_apagado.cpp
 )

@@ -13,6 +13,7 @@
 #include "detector_firmas.h"
 #include "detector_fuerza_bruta.h"
 #include "detector_reconocimiento.h"
+#include "lanzador_panel_control.h"
 #include "notificador_consola.h"
 #include "registrador_csv.h"
 #include "servidor_tcp.h"
@@ -44,8 +45,22 @@ int main(int argc, char** argv) {
     std::string ruta_csv = (argc >= 3) ? argv[2] : RUTA_CSV_POR_DEFECTO;
     std::string ruta_modelo = (argc >= 4) ? argv[3] : RUTA_MODELO_POR_DEFECTO;
     std::string ruta_log = (argc >= 5) ? argv[4] : RUTA_LOG_POR_DEFECTO;
+    std::string ruta_metricas = (argc >= 6) ? argv[5] : sdi::derivar_ruta_metricas(ruta_modelo);
 
     sdi::Bitacora::instancia().abrir_archivo(ruta_log);
+
+    // Al arrancar el servicio se lanza tambien panel-control (la interfaz
+    // grafica) como proceso hijo, para que con solo ejecutar
+    // servicio_inferencia.exe ya aparezca la ventana con el estado del
+    // sistema en tiempo real. Si no se encuentra PanelControl.exe, el
+    // servicio sigue funcionando igual por consola.
+    std::string motivo_sin_panel;
+    if (sdi::lanzar_panel_control(ruta_csv, ruta_metricas, ruta_log, &motivo_sin_panel)) {
+        sdi::Bitacora::instancia().registrar_info("Interfaz grafica (panel-control) iniciada.");
+    } else {
+        sdi::Bitacora::instancia().registrar_advertencia(
+            "No se inicio la interfaz grafica automaticamente: " + motivo_sin_panel);
+    }
 
     if (!sdi::inicializar_sockets()) {
         sdi::Bitacora::instancia().registrar_error("No se pudo inicializar la capa de sockets del sistema.");

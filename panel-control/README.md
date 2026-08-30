@@ -19,6 +19,17 @@ y el `metricas.json` que genera `entrenamiento-modelos`.
    solucion -> "Restore NuGet Packages").
 3. Compilar y ejecutar (F5), plataforma `x64`.
 
+## Ya no hace falta abrirlo a mano
+
+Desde que `servicio-inferencia` incluye `aplicacion/lanzador_panel_control.cpp`,
+`servicio_inferencia.exe` lanza `PanelControl.exe` automaticamente al
+arrancar (ver la seccion "Interfaz grafica automatica" en
+`servicio-inferencia/README.md`) y le pasa las rutas correctas por
+variables de entorno. Para que esto funcione, copia `PanelControl.exe`
+(con los archivos que genera Visual Studio al publicar el proyecto) junto
+a `servicio_inferencia.exe`. Este README sigue siendo valido si prefieres
+seguir abriendo el panel manualmente o depurandolo desde Visual Studio.
+
 ## Como se conecta con el resto del sistema
 
 El panel busca dos archivos (por defecto en la carpeta desde la que se

@@ -68,8 +68,44 @@ make
 ## Ejecutar
 
 ```bash
-./build/servicio_inferencia [puerto=9999] [ruta_csv=eventos_procesados.csv]
+./build/servicio_inferencia [puerto=9999] [ruta_csv=eventos_procesados.csv] [ruta_modelo] [ruta_log] [ruta_metricas]
 ```
 
 Debe correr antes de arrancar `sistema_captura` en la Raspberry Pi (o en
 cualquier momento, ya que `sistema-captura` reintenta la conexion sola).
+
+## Interfaz grafica automatica (Windows)
+
+Al arrancar, `servicio_inferencia.exe` intenta lanzar tambien
+`panel-control` (`aplicacion/lanzador_panel_control.h/.cpp`), la interfaz
+grafica de `panel-control/`, como proceso hijo. Asi, con un solo comando:
+
+```
+servicio_inferencia.exe 9999 eventos_procesados.csv C:\ruta\modelo_iot23_arboles.json servicio.log
+```
+
+ya aparece la ventana de `PanelControl.exe` mostrando el estado del
+sistema, sin necesidad de abrirla por separado. El lanzador:
+
+1. Busca `PanelControl.exe` junto al propio `servicio_inferencia.exe`
+   (tambien revisa `PanelControl\` y `panel-control\` como subcarpetas, y
+   la carpeta de compilacion de desarrollo `panel-control/PanelControl/bin/...`).
+   Para desplegar, lo mas simple es copiar `PanelControl.exe` (con todos los
+   archivos que Visual Studio genera al publicarlo) en la misma carpeta que
+   `servicio_inferencia.exe`.
+2. Si quieres forzar una ubicacion distinta, define la variable de entorno
+   `SDI_RUTA_PANEL_CONTROL` con la ruta completa a `PanelControl.exe` antes
+   de ejecutar el servicio.
+3. Le pasa al panel, por variables de entorno (`PANEL_RUTA_CSV`,
+   `PANEL_RUTA_METRICAS`, `PANEL_RUTA_LOG`), las mismas rutas que recibio
+   `servicio_inferencia.exe`, para que no haga falta configurarlas a mano.
+   La ruta de metricas es el quinto argumento (opcional) del ejecutable; si
+   no se indica, se deduce a partir de la ruta del modelo (ver
+   `derivar_ruta_metricas` en `lanzador_panel_control.cpp`).
+4. Si no encuentra `PanelControl.exe`, el servicio sigue funcionando igual
+   por consola y deja una linea `[ADVERTENCIA]` en el log explicando el
+   motivo (no es un error fatal).
+
+Esto solo aplica en Windows; en Linux/macOS el servicio funciona igual pero
+no intenta lanzar ninguna interfaz grafica (PanelControl es WinUI 3, exclusivo
+de Windows).
