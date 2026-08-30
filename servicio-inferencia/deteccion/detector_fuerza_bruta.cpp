@@ -6,7 +6,6 @@ namespace sdi {
 
 namespace {
 constexpr int PROTOCOLO_TCP = 6;
-constexpr int PROTOCOLO_UDP = 17;
 }
 
 DetectorFuerzaBruta::DetectorFuerzaBruta(int umbral_intentos, double ventana_segundos)
@@ -28,7 +27,7 @@ bool DetectorFuerzaBruta::es_ip_privada(const std::string& ip) const {
 }
 
 VeredictoClasificacion DetectorFuerzaBruta::clasificar(const EventoRed& evento) {
-    if (evento.protocolo != PROTOCOLO_TCP && evento.protocolo != PROTOCOLO_UDP) {
+    if (evento.protocolo != PROTOCOLO_TCP || !evento.es_syn) {
         return VeredictoClasificacion{};
     }
 

@@ -20,6 +20,10 @@ constexpr int ENLACE_LINUX_SLL = 113;
 constexpr int ENLACE_LINUX_SLL2 = 276;
 constexpr int ENLACE_CRUDO = 12;
 
+constexpr uint8_t BANDERA_TCP_FIN = 0x01;
+constexpr uint8_t BANDERA_TCP_SYN = 0x02;
+constexpr uint8_t BANDERA_TCP_ACK = 0x10;
+
 struct InformacionCapaEnlace {
     int longitud_cabecera;
     int posicion_ethertype;
@@ -133,9 +137,16 @@ std::optional<EventoRed> extraer_caracteristicas(const uint8_t* paquete,
 
     int puerto_origen = 1;
     int puerto_destino = 1;
+    bool es_syn = false;
+
     if ((protocolo == IPPROTO_TCP || protocolo == IPPROTO_UDP) && disponible_capa4 >= 4) {
         puerto_origen = leer_entero16_big_endian(inicio_capa4);
         puerto_destino = leer_entero16_big_endian(inicio_capa4 + 2);
+    }
+
+    if (protocolo == IPPROTO_TCP && disponible_capa4 >= 14) {
+        uint8_t banderas = inicio_capa4[13];
+        es_syn = (banderas & BANDERA_TCP_SYN) != 0 && (banderas & BANDERA_TCP_ACK) == 0;
     }
 
     std::string consulta_dns;
@@ -183,6 +194,7 @@ std::optional<EventoRed> extraer_caracteristicas(const uint8_t* paquete,
     evento.resp_ip_bytes_flujo = resultado_flujo.resp_ip_bytes;
     evento.missed_bytes = 0;
     evento.consulta_dns = consulta_dns;
+    evento.es_syn = es_syn;
 
     return evento;
 }

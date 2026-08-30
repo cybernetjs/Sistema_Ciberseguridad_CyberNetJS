@@ -15,6 +15,9 @@ DetectorReconocimiento::DetectorReconocimiento(int umbral_puertos_distintos, dou
 std::string DetectorReconocimiento::nombre() const { return "reconocimiento"; }
 
 VeredictoClasificacion DetectorReconocimiento::clasificar(const EventoRed& evento) {
+    if (evento.protocolo == PROTOCOLO_TCP && !evento.es_syn) {
+        return VeredictoClasificacion{};
+    }
     if (evento.protocolo != PROTOCOLO_TCP && evento.protocolo != PROTOCOLO_UDP) {
         return VeredictoClasificacion{};
     }

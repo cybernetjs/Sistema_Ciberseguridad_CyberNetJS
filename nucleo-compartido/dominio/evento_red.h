@@ -32,6 +32,7 @@ struct EventoRed {
     long resp_ip_bytes_flujo = 0;
     int missed_bytes = 0;
     std::string consulta_dns;
+    bool es_syn = false;
 };
 
 }
