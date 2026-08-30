@@ -12,6 +12,11 @@ Bitacora& Bitacora::instancia() {
     return unica;
 }
 
+void Bitacora::abrir_archivo(const std::string& ruta_archivo) {
+    std::lock_guard<std::mutex> bloqueo(mutex_);
+    archivo_.open(ruta_archivo, std::ios::app);
+}
+
 void Bitacora::escribir(std::ostream& salida, const std::string& nivel, const std::string& mensaje) {
     std::lock_guard<std::mutex> bloqueo(mutex_);
     auto ahora = std::chrono::system_clock::now();
@@ -24,6 +29,11 @@ void Bitacora::escribir(std::ostream& salida, const std::string& nivel, const st
 #endif
 
     salida << "[" << std::put_time(&marca_tiempo, "%H:%M:%S") << "] [" << nivel << "] " << mensaje << std::endl;
+
+    if (archivo_.is_open()) {
+        archivo_ << "[" << std::put_time(&marca_tiempo, "%H:%M:%S") << "] [" << nivel << "] " << mensaje << std::endl;
+        archivo_.flush();
+    }
 }
 
 void Bitacora::registrar_info(const std::string& mensaje) { escribir(std::cout, "INFO", mensaje); }

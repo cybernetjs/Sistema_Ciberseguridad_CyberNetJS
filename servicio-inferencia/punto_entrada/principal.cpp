@@ -35,6 +35,7 @@ constexpr double VARIACION_MAXIMA_BEACON = 0.35;
 constexpr size_t FRECUENCIA_REPORTE_ESTADO = 100;
 constexpr const char* RUTA_CSV_POR_DEFECTO = "eventos_procesados.csv";
 constexpr const char* RUTA_MODELO_POR_DEFECTO = "modelo_iot23_arboles.json";
+constexpr const char* RUTA_LOG_POR_DEFECTO = "servicio.log";
 
 }
 
@@ -42,6 +43,9 @@ int main(int argc, char** argv) {
     int puerto = (argc >= 2) ? std::atoi(argv[1]) : PUERTO_POR_DEFECTO;
     std::string ruta_csv = (argc >= 3) ? argv[2] : RUTA_CSV_POR_DEFECTO;
     std::string ruta_modelo = (argc >= 4) ? argv[3] : RUTA_MODELO_POR_DEFECTO;
+    std::string ruta_log = (argc >= 5) ? argv[4] : RUTA_LOG_POR_DEFECTO;
+
+    sdi::Bitacora::instancia().abrir_archivo(ruta_log);
 
     if (!sdi::inicializar_sockets()) {
         sdi::Bitacora::instancia().registrar_error("No se pudo inicializar la capa de sockets del sistema.");
