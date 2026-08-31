@@ -14,7 +14,23 @@ public sealed class ModeloVistaPrincipal : INotifyPropertyChanged
     public event PropertyChangedEventHandler? PropertyChanged;
 
     public ObservableCollection<RegistroEvento> Eventos { get; } = new();
+    public ObservableCollection<RegistroEvento> EventosFiltrados { get; } = new();
     public ObservableCollection<string> LineasLog { get; } = new();
+
+    private bool _soloAmenazas;
+    public bool SoloAmenazas
+    {
+        get => _soloAmenazas;
+        set
+        {
+            if (Establecer(ref _soloAmenazas, value))
+            {
+                OnPropertyChanged(nameof(EventosVisibles));
+            }
+        }
+    }
+
+    public ObservableCollection<RegistroEvento> EventosVisibles => SoloAmenazas ? EventosFiltrados : Eventos;
 
     private const int MaximoLineasLogVisibles = 500;
 
@@ -122,17 +138,23 @@ public sealed class ModeloVistaPrincipal : INotifyPropertyChanged
         foreach (var evento in nuevos)
         {
             Eventos.Insert(0, evento);
-            TotalEventos++;
             if (evento.EsAmenaza)
             {
+                EventosFiltrados.Insert(0, evento);
                 TotalAlertas++;
             }
+            TotalEventos++;
             _sumaTiempoRespuestaMs += evento.TiempoRespuestaMs;
         }
 
         while (Eventos.Count > MaximoEventosVisibles)
         {
             Eventos.RemoveAt(Eventos.Count - 1);
+        }
+
+        while (EventosFiltrados.Count > MaximoEventosVisibles)
+        {
+            EventosFiltrados.RemoveAt(EventosFiltrados.Count - 1);
         }
 
         OnPropertyChanged(nameof(TiempoRespuestaPromedioTexto));

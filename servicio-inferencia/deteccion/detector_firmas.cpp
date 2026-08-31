@@ -4,6 +4,10 @@
 
 namespace sdi {
 
+namespace {
+constexpr int PROTOCOLO_TCP = 6;
+}
+
 DetectorFirmas::DetectorFirmas(int umbral_paquetes_por_segundo, double ventana_segundos)
     : umbral_paquetes_por_segundo_(umbral_paquetes_por_segundo),
       ventana_segundos_(ventana_segundos),
@@ -17,6 +21,10 @@ VeredictoClasificacion DetectorFirmas::clasificar(const EventoRed& evento) {
                                        "Acceso a puerto conocido de explotacion IoT (" +
                                            std::to_string(evento.puerto_destino) + ")",
                                        1.0};
+    }
+
+    if (evento.protocolo == PROTOCOLO_TCP && !evento.es_syn) {
+        return VeredictoClasificacion{};
     }
 
     double instante_actual = tiempo::segundos_actuales();

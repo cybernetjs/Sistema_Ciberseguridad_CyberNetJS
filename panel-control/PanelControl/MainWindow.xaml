@@ -82,56 +82,65 @@
             </Border>
         </Grid>
 
-        <ListView Grid.Row="2" ItemsSource="{x:Bind ModeloVista.Eventos, Mode=OneWay}">
-            <ListView.HeaderTemplate>
-                <DataTemplate>
-                    <Grid Padding="8,4" ColumnSpacing="8">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="140"/>
-                            <ColumnDefinition Width="130"/>
-                            <ColumnDefinition Width="130"/>
-                            <ColumnDefinition Width="70"/>
-                            <ColumnDefinition Width="160"/>
-                            <ColumnDefinition Width="240"/>
-                            <ColumnDefinition Width="90"/>
-                            <ColumnDefinition Width="110"/>
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="0" Text="Hora" FontWeight="SemiBold"/>
-                        <TextBlock Grid.Column="1" Text="IP origen" FontWeight="SemiBold"/>
-                        <TextBlock Grid.Column="2" Text="IP destino" FontWeight="SemiBold"/>
-                        <TextBlock Grid.Column="3" Text="Puerto" FontWeight="SemiBold"/>
-                        <TextBlock Grid.Column="4" Text="Clasificador" FontWeight="SemiBold"/>
-                        <TextBlock Grid.Column="5" Text="Etiqueta" FontWeight="SemiBold"/>
-                        <TextBlock Grid.Column="6" Text="Confianza" FontWeight="SemiBold"/>
-                        <TextBlock Grid.Column="7" Text="Tiempo (ms)" FontWeight="SemiBold"/>
-                    </Grid>
-                </DataTemplate>
-            </ListView.HeaderTemplate>
-            <ListView.ItemTemplate>
-                <DataTemplate x:DataType="modelos:RegistroEvento">
-                    <Grid Padding="8,6" ColumnSpacing="8" Background="{x:Bind ColorFondo}">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="140"/>
-                            <ColumnDefinition Width="130"/>
-                            <ColumnDefinition Width="130"/>
-                            <ColumnDefinition Width="70"/>
-                            <ColumnDefinition Width="160"/>
-                            <ColumnDefinition Width="240"/>
-                            <ColumnDefinition Width="90"/>
-                            <ColumnDefinition Width="110"/>
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="0" Text="{x:Bind HoraTexto}"/>
-                        <TextBlock Grid.Column="1" Text="{x:Bind IpOrigen}"/>
-                        <TextBlock Grid.Column="2" Text="{x:Bind IpDestino}"/>
-                        <TextBlock Grid.Column="3" Text="{x:Bind PuertoDestino}"/>
-                        <TextBlock Grid.Column="4" Text="{x:Bind Clasificador}"/>
-                        <TextBlock Grid.Column="5" Text="{x:Bind Etiqueta}"/>
-                        <TextBlock Grid.Column="6" Text="{x:Bind ConfianzaTexto}"/>
-                        <TextBlock Grid.Column="7" Text="{x:Bind TiempoRespuestaTexto}"/>
-                    </Grid>
-                </DataTemplate>
-            </ListView.ItemTemplate>
-        </ListView>
+        <Grid Grid.Row="2" RowSpacing="8">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <ToggleSwitch Grid.Row="0" HorizontalAlignment="Left" OnContent="Mostrando solo amenazas" OffContent="Mostrando todos los eventos" IsOn="{x:Bind ModeloVista.SoloAmenazas, Mode=TwoWay}"/>
+
+            <ListView Grid.Row="1" ItemsSource="{x:Bind ModeloVista.EventosVisibles, Mode=OneWay}">
+                <ListView.HeaderTemplate>
+                    <DataTemplate>
+                        <Grid Padding="8,4" ColumnSpacing="8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="140"/>
+                                <ColumnDefinition Width="130"/>
+                                <ColumnDefinition Width="130"/>
+                                <ColumnDefinition Width="70"/>
+                                <ColumnDefinition Width="160"/>
+                                <ColumnDefinition Width="240"/>
+                                <ColumnDefinition Width="90"/>
+                                <ColumnDefinition Width="110"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Hora" FontWeight="SemiBold"/>
+                            <TextBlock Grid.Column="1" Text="IP origen" FontWeight="SemiBold"/>
+                            <TextBlock Grid.Column="2" Text="IP destino" FontWeight="SemiBold"/>
+                            <TextBlock Grid.Column="3" Text="Puerto" FontWeight="SemiBold"/>
+                            <TextBlock Grid.Column="4" Text="Clasificador" FontWeight="SemiBold"/>
+                            <TextBlock Grid.Column="5" Text="Etiqueta" FontWeight="SemiBold"/>
+                            <TextBlock Grid.Column="6" Text="Confianza" FontWeight="SemiBold"/>
+                            <TextBlock Grid.Column="7" Text="Tiempo (ms)" FontWeight="SemiBold"/>
+                        </Grid>
+                    </DataTemplate>
+                </ListView.HeaderTemplate>
+                <ListView.ItemTemplate>
+                    <DataTemplate x:DataType="modelos:RegistroEvento">
+                        <Grid Padding="8,6" ColumnSpacing="8" Background="{x:Bind ColorFondo}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="140"/>
+                                <ColumnDefinition Width="130"/>
+                                <ColumnDefinition Width="130"/>
+                                <ColumnDefinition Width="70"/>
+                                <ColumnDefinition Width="160"/>
+                                <ColumnDefinition Width="240"/>
+                                <ColumnDefinition Width="90"/>
+                                <ColumnDefinition Width="110"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="{x:Bind HoraTexto}"/>
+                            <TextBlock Grid.Column="1" Text="{x:Bind IpOrigen}"/>
+                            <TextBlock Grid.Column="2" Text="{x:Bind IpDestino}"/>
+                            <TextBlock Grid.Column="3" Text="{x:Bind PuertoDestino}"/>
+                            <TextBlock Grid.Column="4" Text="{x:Bind Clasificador}"/>
+                            <TextBlock Grid.Column="5" Text="{x:Bind Etiqueta}"/>
+                            <TextBlock Grid.Column="6" Text="{x:Bind ConfianzaTexto}"/>
+                            <TextBlock Grid.Column="7" Text="{x:Bind TiempoRespuestaTexto}"/>
+                        </Grid>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
+        </Grid>
 
         <Border Grid.Row="3" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" CornerRadius="8" Padding="4">
             <Grid RowSpacing="4">
