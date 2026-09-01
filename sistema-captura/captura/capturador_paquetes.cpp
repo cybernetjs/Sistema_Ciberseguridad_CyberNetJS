@@ -4,7 +4,8 @@
 
 namespace sdi {
 
-CapturadorPaquetes::CapturadorPaquetes(std::string filtro_bpf) : filtro_(std::move(filtro_bpf)) {}
+CapturadorPaquetes::CapturadorPaquetes(std::string interfaz, std::string filtro_bpf)
+    : interfaz_(std::move(interfaz)), filtro_(std::move(filtro_bpf)) {}
 
 CapturadorPaquetes::~CapturadorPaquetes() {
     if (manejador_pcap_) {
@@ -16,7 +17,7 @@ CapturadorPaquetes::~CapturadorPaquetes() {
 bool CapturadorPaquetes::abrir(std::string* mensaje_error) {
     char buffer_error[PCAP_ERRBUF_SIZE] = {0};
 
-    manejador_pcap_ = pcap_create("any", buffer_error);
+    manejador_pcap_ = pcap_create(interfaz_.c_str(), buffer_error);
     if (!manejador_pcap_) {
         if (mensaje_error) *mensaje_error = buffer_error;
         return false;

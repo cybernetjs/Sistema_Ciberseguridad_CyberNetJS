@@ -16,25 +16,27 @@ namespace {
 constexpr int PUERTO_POR_DEFECTO = 9999;
 constexpr size_t TAMANO_LOTE = 25;
 constexpr auto INTERVALO_ENVIO = std::chrono::milliseconds(1000);
+constexpr const char* INTERFAZ_POR_DEFECTO = "br0";
 
 }
 
 int main(int argc, char** argv) {
     if (argc < 2) {
         std::fprintf(stderr,
-                      "Uso: %s <ip_destino> [puerto=%d]\n"
+                      "Uso: %s <ip_destino> [puerto=%d] [interfaz=%s]\n"
                       "Captura y envio de trafico real desde la Raspberry Pi al servicio de inferencia\n",
-                      argv[0], PUERTO_POR_DEFECTO);
+                      argv[0], PUERTO_POR_DEFECTO, INTERFAZ_POR_DEFECTO);
         return 1;
     }
 
     std::string ip_destino = argv[1];
     int puerto = (argc >= 3) ? std::atoi(argv[2]) : PUERTO_POR_DEFECTO;
+    std::string interfaz = (argc >= 4) ? argv[3] : INTERFAZ_POR_DEFECTO;
     std::string filtro_bpf = "ip and not port " + std::to_string(puerto);
 
     sdi::ControladorApagado::instancia().activar();
 
-    sdi::CapturadorPaquetes capturador(filtro_bpf);
+    sdi::CapturadorPaquetes capturador(interfaz, filtro_bpf);
     std::string error_captura;
     if (!capturador.abrir(&error_captura)) {
         sdi::Bitacora::instancia().registrar_error("No se pudo abrir la captura: " + error_captura);
@@ -48,7 +50,7 @@ int main(int argc, char** argv) {
     int tipo_enlace = capturador.tipo_enlace();
 
     sdi::Bitacora::instancia().registrar_info("Capturando trafico real -> " + ip_destino + ":" + std::to_string(puerto));
-    sdi::Bitacora::instancia().registrar_info("Interfaz: any (todas) | filtro BPF: " + filtro_bpf + " | tamano de lote: " + std::to_string(TAMANO_LOTE));
+    sdi::Bitacora::instancia().registrar_info("Interfaz: " + interfaz + " | filtro BPF: " + filtro_bpf + " | tamano de lote: " + std::to_string(TAMANO_LOTE));
     sdi::Bitacora::instancia().registrar_info("Tipo de enlace detectado: " + std::to_string(tipo_enlace));
 
     loteador.iniciar_envio_automatico();

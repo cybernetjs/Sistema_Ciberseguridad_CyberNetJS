@@ -14,7 +14,7 @@ class CapturadorPaquetes {
 public:
     using ManejadorPaquete = std::function<void(const uint8_t* paquete, uint32_t longitud_capturada)>;
 
-    explicit CapturadorPaquetes(std::string filtro_bpf);
+    CapturadorPaquetes(std::string interfaz, std::string filtro_bpf);
     ~CapturadorPaquetes();
 
     bool abrir(std::string* mensaje_error);
@@ -30,6 +30,7 @@ private:
                                         const pcap_pkthdr* cabecera,
                                         const uint8_t* datos);
 
+    std::string interfaz_;
     std::string filtro_;
     pcap_t* manejador_pcap_ = nullptr;
 };
