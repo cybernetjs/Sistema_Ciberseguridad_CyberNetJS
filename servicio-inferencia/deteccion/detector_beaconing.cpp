@@ -22,8 +22,31 @@ DetectorBeaconing::DetectorBeaconing(int minimo_repeticiones, double intervalo_m
 
 std::string DetectorBeaconing::nombre() const { return "beaconing"; }
 
+bool DetectorBeaconing::es_multicast_o_broadcast(const std::string& ip) const {
+    if (ip == "255.255.255.255") {
+        return true;
+    }
+    size_t fin_primer_octeto = ip.find('.');
+    if (fin_primer_octeto == std::string::npos) {
+        return false;
+    }
+    try {
+        int primer_octeto = std::stoi(ip.substr(0, fin_primer_octeto));
+        if (primer_octeto >= 224 && primer_octeto <= 239) {
+            return true;
+        }
+    } catch (const std::exception&) {
+        return false;
+    }
+    return false;
+}
+
 VeredictoClasificacion DetectorBeaconing::clasificar(const EventoRed& evento) {
     if (evento.protocolo != PROTOCOLO_TCP && evento.protocolo != PROTOCOLO_UDP) {
+        return VeredictoClasificacion{};
+    }
+
+    if (es_multicast_o_broadcast(evento.ip_destino)) {
         return VeredictoClasificacion{};
     }
 

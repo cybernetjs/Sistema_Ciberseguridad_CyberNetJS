@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 from imblearn.over_sampling import SMOTE
 from sklearn.feature_selection import SelectKBest, f_classif
 from sklearn.preprocessing import LabelEncoder, StandardScaler
@@ -6,6 +7,13 @@ from sklearn.preprocessing import LabelEncoder, StandardScaler
 
 def limpiar(df, columna_etiqueta):
     df = df.drop_duplicates()
+    for columna in df.columns:
+        if columna == columna_etiqueta:
+            continue
+        if df[columna].dtype == object:
+            convertida = pd.to_numeric(df[columna], errors="coerce")
+            if convertida.notna().sum() > 0:
+                df[columna] = convertida.fillna(0)
     df = df.replace([np.inf, -np.inf], np.nan)
     df = df.dropna()
     columnas_texto = df.select_dtypes(include="object").columns.tolist()

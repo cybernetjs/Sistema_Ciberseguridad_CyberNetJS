@@ -12,6 +12,7 @@ json evento_a_objeto_json(const EventoRed& evento) {
     return json{
         {"ip_origen", evento.ip_origen},
         {"ip_destino", evento.ip_destino},
+        {"puerto_origen", evento.puerto_origen},
         {"puerto_destino", evento.puerto_destino},
         {"protocolo", evento.protocolo},
         {"duracion", evento.duracion},
@@ -30,6 +31,13 @@ json evento_a_objeto_json(const EventoRed& evento) {
         {"fluctuacion_destino", evento.fluctuacion_destino},
         {"conteo_servicio_origen", evento.conteo_servicio_origen},
         {"conteo_destino_reciente", evento.conteo_destino_reciente},
+        {"orig_pkts_flujo", evento.orig_pkts_flujo},
+        {"orig_ip_bytes_flujo", evento.orig_ip_bytes_flujo},
+        {"resp_pkts_flujo", evento.resp_pkts_flujo},
+        {"resp_ip_bytes_flujo", evento.resp_ip_bytes_flujo},
+        {"missed_bytes", evento.missed_bytes},
+        {"consulta_dns", evento.consulta_dns},
+        {"es_syn", evento.es_syn},
     };
 }
 

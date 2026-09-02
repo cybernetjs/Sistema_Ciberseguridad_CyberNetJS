@@ -9,7 +9,9 @@ constexpr int PROTOCOLO_TCP = 6;
 }
 
 DetectorFuerzaBruta::DetectorFuerzaBruta(int umbral_intentos, double ventana_segundos)
-    : umbral_intentos_(umbral_intentos), ventana_segundos_(ventana_segundos) {}
+    : umbral_intentos_(umbral_intentos),
+      ventana_segundos_(ventana_segundos),
+      puertos_credenciales_{21, 22, 23, 25, 110, 143, 445, 1433, 3306, 3389, 5900} {}
 
 std::string DetectorFuerzaBruta::nombre() const { return "fuerza_bruta"; }
 
@@ -26,12 +28,20 @@ bool DetectorFuerzaBruta::es_ip_privada(const std::string& ip) const {
     return false;
 }
 
+bool DetectorFuerzaBruta::es_puerto_credencial(int puerto) const {
+    return puertos_credenciales_.count(puerto) > 0;
+}
+
 VeredictoClasificacion DetectorFuerzaBruta::clasificar(const EventoRed& evento) {
     if (evento.protocolo != PROTOCOLO_TCP || !evento.es_syn) {
         return VeredictoClasificacion{};
     }
 
     if (!es_ip_privada(evento.ip_destino)) {
+        return VeredictoClasificacion{};
+    }
+
+    if (!es_puerto_credencial(evento.puerto_destino)) {
         return VeredictoClasificacion{};
     }
 

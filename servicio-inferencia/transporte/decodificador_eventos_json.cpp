@@ -12,6 +12,7 @@ EventoRed decodificar_uno(const json& objeto) {
     EventoRed evento;
     evento.ip_origen = objeto.value("ip_origen", std::string());
     evento.ip_destino = objeto.value("ip_destino", std::string());
+    evento.puerto_origen = objeto.value("puerto_origen", 1);
     evento.puerto_destino = objeto.value("puerto_destino", 1);
     evento.protocolo = objeto.value("protocolo", 0);
     evento.duracion = objeto.value("duracion", 0.001);
@@ -30,6 +31,13 @@ EventoRed decodificar_uno(const json& objeto) {
     evento.fluctuacion_destino = objeto.value("fluctuacion_destino", 0.0);
     evento.conteo_servicio_origen = objeto.value("conteo_servicio_origen", 1);
     evento.conteo_destino_reciente = objeto.value("conteo_destino_reciente", 1);
+    evento.orig_pkts_flujo = objeto.value("orig_pkts_flujo", 0L);
+    evento.orig_ip_bytes_flujo = objeto.value("orig_ip_bytes_flujo", 0L);
+    evento.resp_pkts_flujo = objeto.value("resp_pkts_flujo", 0L);
+    evento.resp_ip_bytes_flujo = objeto.value("resp_ip_bytes_flujo", 0L);
+    evento.missed_bytes = objeto.value("missed_bytes", 0);
+    evento.consulta_dns = objeto.value("consulta_dns", std::string());
+    evento.es_syn = objeto.value("es_syn", false);
     return evento;
 }
 

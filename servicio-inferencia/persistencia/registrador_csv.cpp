@@ -31,7 +31,7 @@ std::string campo_csv(const std::string& valor) {
     return resultado;
 }
 
-}  // namespace
+}
 
 RegistradorCsv::RegistradorCsv(const std::string& ruta_archivo) : ruta_archivo_(ruta_archivo) {
     bool ya_existe = std::filesystem::exists(ruta_archivo_) && std::filesystem::file_size(ruta_archivo_) > 0;
@@ -52,11 +52,12 @@ RegistradorCsv::RegistradorCsv(const std::string& ruta_archivo) : ruta_archivo_(
 bool RegistradorCsv::listo() const { return const_cast<std::ofstream&>(archivo_).is_open(); }
 
 void RegistradorCsv::escribir_encabezado() {
-    archivo_ << "marca_tiempo_unix,ip_origen,ip_destino,puerto_destino,protocolo,"
+    archivo_ << "marca_tiempo_unix,ip_origen,ip_destino,puerto_origen,puerto_destino,protocolo,"
                 "duracion,paquetes_origen,paquetes_destino,bytes_origen,bytes_destino,"
                 "tasa_transferencia,ttl_origen,ttl_destino,carga_origen,carga_destino,"
                 "intervalo_origen,intervalo_destino,fluctuacion_origen,fluctuacion_destino,"
                 "conteo_servicio_origen,conteo_destino_reciente,"
+                "orig_pkts_flujo,orig_ip_bytes_flujo,resp_pkts_flujo,resp_ip_bytes_flujo,missed_bytes,"
                 "clasificador,es_amenaza,etiqueta,confianza,tiempo_respuesta_ms\n";
     archivo_.flush();
 }
@@ -76,6 +77,7 @@ void RegistradorCsv::registrar(const EventoRed& evento, const VeredictoClasifica
     fila << marca_tiempo_unix << ','
          << campo_csv(evento.ip_origen) << ','
          << campo_csv(evento.ip_destino) << ','
+         << evento.puerto_origen << ','
          << evento.puerto_destino << ','
          << evento.protocolo << ','
          << evento.duracion << ','
@@ -94,6 +96,11 @@ void RegistradorCsv::registrar(const EventoRed& evento, const VeredictoClasifica
          << evento.fluctuacion_destino << ','
          << evento.conteo_servicio_origen << ','
          << evento.conteo_destino_reciente << ','
+         << evento.orig_pkts_flujo << ','
+         << evento.orig_ip_bytes_flujo << ','
+         << evento.resp_pkts_flujo << ','
+         << evento.resp_ip_bytes_flujo << ','
+         << evento.missed_bytes << ','
          << campo_csv(clasificador) << ','
          << (veredicto.es_amenaza ? 1 : 0) << ','
          << campo_csv(veredicto.etiqueta) << ','

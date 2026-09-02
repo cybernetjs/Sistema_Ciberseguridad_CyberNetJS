@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <deque>
 #include <mutex>
 #include <string>
@@ -23,6 +24,8 @@ private:
         long bytes_acumulados = 0;
         bool ya_alertado = false;
     };
+
+    bool es_multicast_o_broadcast(const std::string& ip) const;
 
     int minimo_repeticiones_;
     double intervalo_min_segundos_;

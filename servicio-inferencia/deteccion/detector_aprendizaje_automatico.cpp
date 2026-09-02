@@ -4,6 +4,7 @@
 #include <fstream>
 
 #include "nlohmann/json.hpp"
+#include "reloj.h"
 
 namespace sdi {
 
@@ -71,6 +72,8 @@ std::vector<double> DetectorAprendizajeAutomatico::construir_vector_caracteristi
     std::vector<double> crudo;
     crudo.reserve(orden_caracteristicas_.size());
 
+    double duracion_segura = evento.duracion > 0.001 ? evento.duracion : 0.001;
+
     for (const std::string& nombre : orden_caracteristicas_) {
         double valor = 0.0;
         if (nombre == "id.orig_p") {
@@ -86,6 +89,12 @@ std::vector<double> DetectorAprendizajeAutomatico::construir_vector_caracteristi
         } else if (nombre == "resp_pkts") {
             valor = static_cast<double>(evento.resp_pkts_flujo);
         } else if (nombre == "resp_ip_bytes") {
+            valor = static_cast<double>(evento.resp_ip_bytes_flujo);
+        } else if (nombre == "duration") {
+            valor = duracion_segura;
+        } else if (nombre == "orig_bytes") {
+            valor = static_cast<double>(evento.orig_ip_bytes_flujo);
+        } else if (nombre == "resp_bytes") {
             valor = static_cast<double>(evento.resp_ip_bytes_flujo);
         }
         crudo.push_back(valor);
@@ -112,6 +121,20 @@ double DetectorAprendizajeAutomatico::evaluar_arbol(const ArbolXgboost& arbol, c
     }
 }
 
+std::string DetectorAprendizajeAutomatico::construir_clave_flujo(const EventoRed& evento) const {
+    std::string ip_a = evento.ip_origen;
+    std::string ip_b = evento.ip_destino;
+    int puerto_a = evento.puerto_origen;
+    int puerto_b = evento.puerto_destino;
+
+    if (ip_a < ip_b || (ip_a == ip_b && puerto_a <= puerto_b)) {
+        return ip_a + ":" + std::to_string(puerto_a) + "-" + ip_b + ":" + std::to_string(puerto_b) + "-" +
+               std::to_string(evento.protocolo);
+    }
+    return ip_b + ":" + std::to_string(puerto_b) + "-" + ip_a + ":" + std::to_string(puerto_a) + "-" +
+           std::to_string(evento.protocolo);
+}
+
 VeredictoClasificacion DetectorAprendizajeAutomatico::clasificar(const EventoRed& evento) {
     VeredictoClasificacion veredicto;
 
@@ -132,9 +155,29 @@ VeredictoClasificacion DetectorAprendizajeAutomatico::clasificar(const EventoRed
 
     double probabilidad = 1.0 / (1.0 + std::exp(-margen));
     long total_paquetes_flujo = evento.orig_pkts_flujo + evento.resp_pkts_flujo;
+    double duracion_segura = evento.duracion > 0.001 ? evento.duracion : 0.001;
+    double pps_flujo = static_cast<double>(total_paquetes_flujo) / duracion_segura;
 
-    veredicto.es_amenaza = (probabilidad > umbral_probabilidad_alerta_) && (total_paquetes_flujo >= paquetes_minimos_alerta_);
-    veredicto.etiqueta = veredicto.es_amenaza ? "ataque" : "benigno";
+    bool supera_probabilidad = probabilidad > umbral_probabilidad_alerta_;
+    bool supera_volumen = total_paquetes_flujo >= paquetes_minimos_alerta_;
+    bool supera_tasa = pps_flujo >= pps_minimo_alerta_;
+
+    if (!(supera_probabilidad && supera_volumen && supera_tasa)) {
+        return veredicto;
+    }
+
+    std::string clave_flujo = construir_clave_flujo(evento);
+    double ahora = tiempo::segundos_actuales();
+
+    auto it = ultima_alerta_por_flujo_.find(clave_flujo);
+    if (it != ultima_alerta_por_flujo_.end() && (ahora - it->second) < cooldown_alerta_segundos_) {
+        return veredicto;
+    }
+
+    ultima_alerta_por_flujo_[clave_flujo] = ahora;
+
+    veredicto.es_amenaza = true;
+    veredicto.etiqueta = "ataque";
     veredicto.confianza = probabilidad;
 
     return veredicto;
