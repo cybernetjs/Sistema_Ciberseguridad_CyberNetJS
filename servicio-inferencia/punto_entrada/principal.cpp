@@ -29,10 +29,10 @@ constexpr int UMBRAL_INTENTOS_FUERZA_BRUTA = 8;
 constexpr double VENTANA_FUERZA_BRUTA_SEGUNDOS = 10.0;
 constexpr int UMBRAL_DOMINIOS_DGA = 6;
 constexpr double VENTANA_DGA_SEGUNDOS = 30.0;
-constexpr int MINIMO_REPETICIONES_BEACON = 5;
-constexpr double INTERVALO_MIN_BEACON_SEGUNDOS = 5.0;
+constexpr int MINIMO_REPETICIONES_BEACON = 10;
+constexpr double INTERVALO_MIN_BEACON_SEGUNDOS = 20.0;
 constexpr double INTERVALO_MAX_BEACON_SEGUNDOS = 180.0;
-constexpr double VARIACION_MAXIMA_BEACON = 0.35;
+constexpr double VARIACION_MAXIMA_BEACON = 0.15;
 constexpr size_t FRECUENCIA_REPORTE_ESTADO = 100;
 constexpr const char* RUTA_CSV_POR_DEFECTO = "eventos_procesados.csv";
 constexpr const char* RUTA_MODELO_POR_DEFECTO = "modelo_iot23_arboles.json";
@@ -49,11 +49,6 @@ int main(int argc, char** argv) {
 
     sdi::Bitacora::instancia().abrir_archivo(ruta_log);
 
-    // Al arrancar el servicio se lanza tambien panel-control (la interfaz
-    // grafica) como proceso hijo, para que con solo ejecutar
-    // servicio_inferencia.exe ya aparezca la ventana con el estado del
-    // sistema en tiempo real. Si no se encuentra PanelControl.exe, el
-    // servicio sigue funcionando igual por consola.
     std::string motivo_sin_panel;
     if (sdi::lanzar_panel_control(ruta_csv, ruta_metricas, ruta_log, &motivo_sin_panel)) {
         sdi::Bitacora::instancia().registrar_info("Interfaz grafica (panel-control) iniciada.");
