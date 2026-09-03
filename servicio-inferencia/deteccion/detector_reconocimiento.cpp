@@ -7,6 +7,7 @@ namespace sdi {
 namespace {
 constexpr int PROTOCOLO_TCP = 6;
 constexpr int PROTOCOLO_UDP = 17;
+constexpr int PUERTOS_RESPUESTA_CONOCIDOS[] = {53, 67, 68, 123, 137, 138, 5353};
 }
 
 DetectorReconocimiento::DetectorReconocimiento(int umbral_puertos_distintos, double ventana_segundos)
@@ -20,6 +21,14 @@ VeredictoClasificacion DetectorReconocimiento::clasificar(const EventoRed& event
     }
     if (evento.protocolo != PROTOCOLO_TCP && evento.protocolo != PROTOCOLO_UDP) {
         return VeredictoClasificacion{};
+    }
+
+    if (evento.protocolo == PROTOCOLO_UDP) {
+        for (int puerto_respuesta : PUERTOS_RESPUESTA_CONOCIDOS) {
+            if (evento.puerto_origen == puerto_respuesta) {
+                return VeredictoClasificacion{};
+            }
+        }
     }
 
     double instante_actual = tiempo::segundos_actuales();
