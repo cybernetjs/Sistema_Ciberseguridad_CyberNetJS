@@ -1,5 +1,6 @@
 #pragma once
 
+#include <deque>
 #include <mutex>
 #include <string>
 #include <unordered_map>
@@ -18,9 +19,8 @@ public:
 
 private:
     struct ContadorIntentos {
-        int cantidad = 0;
-        double inicio_ventana = 0.0;
-        bool ya_alertado = false;
+        std::deque<double> marcas_tiempo;
+        double ultima_alerta = 0.0;
     };
 
     bool es_ip_privada(const std::string& ip) const;
@@ -28,6 +28,7 @@ private:
 
     int umbral_intentos_;
     double ventana_segundos_;
+    double cooldown_alerta_segundos_;
     std::unordered_set<int> puertos_credenciales_;
 
     std::mutex mutex_;

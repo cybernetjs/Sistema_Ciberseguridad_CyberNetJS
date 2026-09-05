@@ -11,6 +11,7 @@ constexpr int PROTOCOLO_TCP = 6;
 DetectorFuerzaBruta::DetectorFuerzaBruta(int umbral_intentos, double ventana_segundos)
     : umbral_intentos_(umbral_intentos),
       ventana_segundos_(ventana_segundos),
+      cooldown_alerta_segundos_(60.0),
       puertos_credenciales_{21, 22, 23, 25, 110, 143, 445, 1433, 3306, 3389, 5900} {}
 
 std::string DetectorFuerzaBruta::nombre() const { return "fuerza_bruta"; }
@@ -51,16 +52,18 @@ VeredictoClasificacion DetectorFuerzaBruta::clasificar(const EventoRed& evento) 
     std::lock_guard<std::mutex> bloqueo(mutex_);
 
     auto& contador = contadores_[clave];
-    if (instante_actual - contador.inicio_ventana > ventana_segundos_) {
-        contador.inicio_ventana = instante_actual;
-        contador.cantidad = 0;
-        contador.ya_alertado = false;
+    contador.marcas_tiempo.push_back(instante_actual);
+
+    while (!contador.marcas_tiempo.empty() &&
+           instante_actual - contador.marcas_tiempo.front() > ventana_segundos_) {
+        contador.marcas_tiempo.pop_front();
     }
 
-    contador.cantidad += 1;
+    bool supera_umbral = static_cast<int>(contador.marcas_tiempo.size()) > umbral_intentos_;
+    bool paso_cooldown = instante_actual - contador.ultima_alerta > cooldown_alerta_segundos_;
 
-    if (contador.cantidad > umbral_intentos_ && !contador.ya_alertado) {
-        contador.ya_alertado = true;
+    if (supera_umbral && paso_cooldown) {
+        contador.ultima_alerta = instante_actual;
         return VeredictoClasificacion{true,
                                        "Posible fuerza bruta de credenciales desde " + evento.ip_origen +
                                            " hacia " + evento.ip_destino + ":" + std::to_string(evento.puerto_destino),
