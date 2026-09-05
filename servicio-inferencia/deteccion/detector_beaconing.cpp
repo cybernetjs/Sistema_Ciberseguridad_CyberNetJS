@@ -42,7 +42,14 @@ bool DetectorBeaconing::es_multicast_o_broadcast(const std::string& ip) const {
 }
 
 VeredictoClasificacion DetectorBeaconing::clasificar(const EventoRed& evento) {
-    if (evento.protocolo != PROTOCOLO_TCP && evento.protocolo != PROTOCOLO_UDP) {
+    bool es_inicio_conexion = false;
+    if (evento.protocolo == PROTOCOLO_TCP) {
+        es_inicio_conexion = evento.es_syn;
+    } else if (evento.protocolo == PROTOCOLO_UDP) {
+        es_inicio_conexion = true;
+    }
+
+    if (!es_inicio_conexion) {
         return VeredictoClasificacion{};
     }
 
