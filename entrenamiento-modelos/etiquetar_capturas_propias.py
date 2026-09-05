@@ -1,37 +1,36 @@
 import argparse
-import csv
 
 import pandas as pd
 
 
-def cargar_ventanas(ruta_ventanas):
-    ventanas = []
-    with open(ruta_ventanas, newline="") as archivo:
-        lector = csv.DictReader(archivo)
-        for fila in lector:
-            ventanas.append((float(fila["inicio"]), float(fila["fin"]), fila["etiqueta"]))
-    return ventanas
+def construir_pares_ataque(df):
+    alertas = df[df["es_amenaza"] == 1]
+    pares = set()
+    for _, fila in alertas.iterrows():
+        pares.add((fila["ip_origen"], fila["ip_destino"]))
+    return pares
 
 
-def etiquetar(marca_tiempo, ventanas, etiqueta_por_defecto):
-    for inicio, fin, etiqueta in ventanas:
-        if inicio <= marca_tiempo <= fin:
-            return etiqueta
-    return etiqueta_por_defecto
+def etiquetar_fila(fila, pares):
+    clave = (fila["ip_origen"], fila["ip_destino"])
+    if clave in pares:
+        return "Malicious"
+    return "benign"
 
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--eventos", required=True)
-    parser.add_argument("--ventanas", required=True)
     parser.add_argument("--salida", required=True)
-    parser.add_argument("--etiqueta-por-defecto", default="benign")
     argumentos = parser.parse_args()
 
     df = pd.read_csv(argumentos.eventos, low_memory=False)
-    ventanas = cargar_ventanas(argumentos.ventanas)
 
-    df["label"] = df["marca_tiempo_unix"].apply(lambda t: etiquetar(t, ventanas, argumentos.etiqueta_por_defecto))
+    pares = construir_pares_ataque(df)
+    if not pares:
+        print("No se encontraron alertas en este CSV, todo el archivo se etiquetara como benigno")
+
+    df["label"] = df.apply(lambda fila: etiquetar_fila(fila, pares), axis=1)
 
     columnas_salida = {
         "puerto_origen": "id.orig_p",
@@ -50,6 +49,11 @@ def main():
     columnas_finales = list(columnas_salida.values()) + ["label"]
     df_salida = df_salida[columnas_finales]
     df_salida.to_csv(argumentos.salida, index=False)
+
+    total_malicioso = (df["label"] == "Malicious").sum()
+    total_benigno = (df["label"] == "benign").sum()
+    print(f"Filas etiquetadas como Malicious: {total_malicioso}")
+    print(f"Filas etiquetadas como benign: {total_benigno}")
 
 
 if __name__ == "__main__":
