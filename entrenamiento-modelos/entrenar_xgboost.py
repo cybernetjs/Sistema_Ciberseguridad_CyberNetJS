@@ -28,11 +28,12 @@ from preprocesamiento import (
 
 def entrenar(ruta_datos, columna_etiqueta, etiqueta_benigna, k_caracteristicas, ruta_salida, binario, columnas_excluir):
     df = cargar_dataset(ruta_datos)
-    df = limpiar(df, columna_etiqueta)
 
     if columnas_excluir:
         columnas_a_quitar = [c.strip() for c in columnas_excluir.split(",") if c.strip() in df.columns]
         df = df.drop(columns=columnas_a_quitar)
+
+    df = limpiar(df, columna_etiqueta)
 
     if binario:
         etiquetas = separar_binario(df[columna_etiqueta], etiqueta_benigna)

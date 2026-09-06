@@ -1,19 +1,19 @@
 {
-  "accuracy": 0.9988505376195371,
-  "precision": 0.9988634080319339,
-  "recall": 0.9988505376195371,
-  "f1_score": 0.9988534996041584,
+  "accuracy": 0.9987127819913877,
+  "precision": 0.9987289864580127,
+  "recall": 0.9987127819913877,
+  "f1_score": 0.9987164952153096,
   "matriz_confusion": [
     [
-      123670,
-      31
+      126064,
+      29
     ],
     [
-      1465,
-      1176312
+      1668,
+      1190586
     ]
   ],
-  "tiempo_prediccion_ms_por_registro": 0.00022633236972503706,
+  "tiempo_prediccion_ms_por_registro": 0.001271655489916169,
   "clases": [
     "benigno",
     "ataque"
@@ -29,6 +29,6 @@
     "resp_pkts",
     "resp_ip_bytes"
   ],
-  "total_registros_entrenamiento": 9422210,
-  "total_registros_prueba": 1301478
+  "total_registros_entrenamiento": 9538024,
+  "total_registros_prueba": 1318347
 }

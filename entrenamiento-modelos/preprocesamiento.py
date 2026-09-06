@@ -14,12 +14,12 @@ def limpiar(df, columna_etiqueta):
             convertida = pd.to_numeric(df[columna], errors="coerce")
             if convertida.notna().sum() > 0:
                 df[columna] = convertida.fillna(0)
-    df = df.replace([np.inf, -np.inf], np.nan)
-    df = df.dropna()
     columnas_texto = df.select_dtypes(include="object").columns.tolist()
     if columna_etiqueta in columnas_texto:
         columnas_texto.remove(columna_etiqueta)
     df = df.drop(columns=columnas_texto)
+    df = df.replace([np.inf, -np.inf], np.nan)
+    df = df.dropna()
     return df.reset_index(drop=True)
 
 
