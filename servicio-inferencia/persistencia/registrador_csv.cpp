@@ -2,6 +2,7 @@
 
 #include <chrono>
 #include <filesystem>
+#include <fstream>
 #include <iomanip>
 #include <sstream>
 
@@ -10,6 +11,16 @@
 namespace sdi {
 
 namespace {
+
+const std::string ENCABEZADO_ESPERADO =
+    "marca_tiempo_unix,ip_origen,ip_destino,puerto_origen,puerto_destino,protocolo,"
+    "duracion,paquetes_origen,paquetes_destino,bytes_origen,bytes_destino,"
+    "tasa_transferencia,ttl_origen,ttl_destino,carga_origen,carga_destino,"
+    "intervalo_origen,intervalo_destino,fluctuacion_origen,fluctuacion_destino,"
+    "conteo_servicio_origen,conteo_destino_reciente,"
+    "orig_pkts_flujo,orig_ip_bytes_flujo,resp_pkts_flujo,resp_ip_bytes_flujo,missed_bytes,"
+    "clasificador,es_amenaza,etiqueta,confianza,tiempo_respuesta_ms,"
+    "veredicto_ia_es_amenaza,veredicto_ia_confianza";
 
 std::string campo_csv(const std::string& valor) {
     bool necesita_comillas = valor.find(',') != std::string::npos ||
@@ -31,10 +42,31 @@ std::string campo_csv(const std::string& valor) {
     return resultado;
 }
 
+std::string leer_primera_linea(const std::string& ruta_archivo) {
+    std::ifstream archivo_lectura(ruta_archivo);
+    if (!archivo_lectura.is_open()) {
+        return "";
+    }
+    std::string primera_linea;
+    std::getline(archivo_lectura, primera_linea);
+    if (!primera_linea.empty() && primera_linea.back() == '\r') {
+        primera_linea.pop_back();
+    }
+    return primera_linea;
+}
+
 }
 
 RegistradorCsv::RegistradorCsv(const std::string& ruta_archivo) : ruta_archivo_(ruta_archivo) {
     bool ya_existe = std::filesystem::exists(ruta_archivo_) && std::filesystem::file_size(ruta_archivo_) > 0;
+    bool encabezado_coincide = ya_existe && leer_primera_linea(ruta_archivo_) == ENCABEZADO_ESPERADO;
+
+    if (ya_existe && !encabezado_coincide) {
+        Bitacora::instancia().registrar_error(
+            "El CSV existente tiene un encabezado distinto al actual, se reinicia el archivo: " + ruta_archivo_);
+        std::filesystem::remove(ruta_archivo_);
+        ya_existe = false;
+    }
 
     archivo_.open(ruta_archivo_, std::ios::app);
     if (!archivo_.is_open()) {
@@ -52,18 +84,13 @@ RegistradorCsv::RegistradorCsv(const std::string& ruta_archivo) : ruta_archivo_(
 bool RegistradorCsv::listo() const { return const_cast<std::ofstream&>(archivo_).is_open(); }
 
 void RegistradorCsv::escribir_encabezado() {
-    archivo_ << "marca_tiempo_unix,ip_origen,ip_destino,puerto_origen,puerto_destino,protocolo,"
-                "duracion,paquetes_origen,paquetes_destino,bytes_origen,bytes_destino,"
-                "tasa_transferencia,ttl_origen,ttl_destino,carga_origen,carga_destino,"
-                "intervalo_origen,intervalo_destino,fluctuacion_origen,fluctuacion_destino,"
-                "conteo_servicio_origen,conteo_destino_reciente,"
-                "orig_pkts_flujo,orig_ip_bytes_flujo,resp_pkts_flujo,resp_ip_bytes_flujo,missed_bytes,"
-                "clasificador,es_amenaza,etiqueta,confianza,tiempo_respuesta_ms\n";
+    archivo_ << ENCABEZADO_ESPERADO << "\n";
     archivo_.flush();
 }
 
 void RegistradorCsv::registrar(const EventoRed& evento, const VeredictoClasificacion& veredicto,
-                                const std::string& clasificador, double tiempo_respuesta_ms) {
+                                const std::string& clasificador, double tiempo_respuesta_ms,
+                                const VeredictoClasificacion& veredicto_ia_diagnostico) {
     std::lock_guard<std::mutex> bloqueo(mutex_);
     if (!archivo_.is_open()) {
         return;
@@ -105,7 +132,9 @@ void RegistradorCsv::registrar(const EventoRed& evento, const VeredictoClasifica
          << (veredicto.es_amenaza ? 1 : 0) << ','
          << campo_csv(veredicto.etiqueta) << ','
          << veredicto.confianza << ','
-         << tiempo_respuesta_ms << '\n';
+         << tiempo_respuesta_ms << ','
+         << (veredicto_ia_diagnostico.es_amenaza ? 1 : 0) << ','
+         << veredicto_ia_diagnostico.confianza << '\n';
 
     archivo_ << fila.str();
     archivo_.flush();

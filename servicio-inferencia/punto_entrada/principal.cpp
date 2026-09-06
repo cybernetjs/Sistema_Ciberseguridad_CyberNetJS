@@ -91,7 +91,7 @@ int main(int argc, char** argv) {
     sdi::CanalizadorEventos canalizador(
         {&detector_reconocimiento, &detector_fuerza_bruta, &detector_dga, &detector_beaconing, &detector_firmas,
          &detector_aprendizaje_automatico},
-        notificador, registrador);
+        notificador, registrador, &detector_aprendizaje_automatico);
 
     sdi::Bitacora::instancia().registrar_info("Servicio de inferencia escuchando en el puerto " + std::to_string(puerto));
     sdi::Bitacora::instancia().registrar_info(

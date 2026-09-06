@@ -5,8 +5,12 @@
 namespace sdi {
 
 CanalizadorEventos::CanalizadorEventos(std::vector<IClasificadorEventos*> clasificadores,
-                                        INotificadorAlertas& notificador, IRegistradorEventos& registrador)
-    : clasificadores_(std::move(clasificadores)), notificador_(notificador), registrador_(registrador) {}
+                                        INotificadorAlertas& notificador, IRegistradorEventos& registrador,
+                                        IClasificadorEventos* detector_diagnostico_ia)
+    : clasificadores_(std::move(clasificadores)),
+      notificador_(notificador),
+      registrador_(registrador),
+      detector_diagnostico_ia_(detector_diagnostico_ia) {}
 
 void CanalizadorEventos::procesar(const EventoRed& evento) {
     auto inicio = std::chrono::steady_clock::now();
@@ -24,10 +28,15 @@ void CanalizadorEventos::procesar(const EventoRed& evento) {
         }
     }
 
+    VeredictoClasificacion veredicto_ia_diagnostico;
+    if (detector_diagnostico_ia_ != nullptr) {
+        veredicto_ia_diagnostico = detector_diagnostico_ia_->clasificar(evento);
+    }
+
     auto fin = std::chrono::steady_clock::now();
     double tiempo_respuesta_ms = std::chrono::duration<double, std::milli>(fin - inicio).count();
 
-    registrador_.registrar(evento, veredicto_final, clasificador_nombre, tiempo_respuesta_ms);
+    registrador_.registrar(evento, veredicto_final, clasificador_nombre, tiempo_respuesta_ms, veredicto_ia_diagnostico);
 
     if (veredicto_final.es_amenaza) {
         total_alertas_++;

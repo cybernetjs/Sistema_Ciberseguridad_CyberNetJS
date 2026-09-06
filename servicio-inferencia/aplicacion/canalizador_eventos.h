@@ -13,7 +13,7 @@ namespace sdi {
 class CanalizadorEventos {
 public:
     CanalizadorEventos(std::vector<IClasificadorEventos*> clasificadores, INotificadorAlertas& notificador,
-                        IRegistradorEventos& registrador);
+                        IRegistradorEventos& registrador, IClasificadorEventos* detector_diagnostico_ia);
 
     void procesar(const EventoRed& evento);
 
@@ -24,6 +24,7 @@ private:
     std::vector<IClasificadorEventos*> clasificadores_;
     INotificadorAlertas& notificador_;
     IRegistradorEventos& registrador_;
+    IClasificadorEventos* detector_diagnostico_ia_;
 
     std::atomic<size_t> total_procesado_{0};
     std::atomic<size_t> total_alertas_{0};

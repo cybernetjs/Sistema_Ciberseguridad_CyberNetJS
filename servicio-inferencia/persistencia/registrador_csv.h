@@ -13,7 +13,8 @@ public:
     explicit RegistradorCsv(const std::string& ruta_archivo);
 
     void registrar(const EventoRed& evento, const VeredictoClasificacion& veredicto,
-                    const std::string& clasificador, double tiempo_respuesta_ms) override;
+                    const std::string& clasificador, double tiempo_respuesta_ms,
+                    const VeredictoClasificacion& veredicto_ia_diagnostico) override;
 
     bool listo() const;
 
