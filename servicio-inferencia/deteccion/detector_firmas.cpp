@@ -6,6 +6,7 @@ namespace sdi {
 
 namespace {
 constexpr int PROTOCOLO_TCP = 6;
+constexpr int PROTOCOLO_UDP = 17;
 }
 
 DetectorFirmas::DetectorFirmas(int umbral_paquetes_por_segundo, double ventana_segundos)
@@ -24,6 +25,10 @@ VeredictoClasificacion DetectorFirmas::clasificar(const EventoRed& evento) {
     }
 
     if (evento.protocolo == PROTOCOLO_TCP && !evento.es_syn) {
+        return VeredictoClasificacion{};
+    }
+
+    if (evento.protocolo == PROTOCOLO_UDP && (evento.puerto_origen == 443 || evento.puerto_origen == 80)) {
         return VeredictoClasificacion{};
     }
 

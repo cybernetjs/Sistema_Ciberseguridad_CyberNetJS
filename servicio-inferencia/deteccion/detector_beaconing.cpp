@@ -11,6 +11,7 @@ namespace {
 constexpr int PROTOCOLO_TCP = 6;
 constexpr int PROTOCOLO_UDP = 17;
 constexpr size_t MAXIMO_HISTORIAL = 10;
+constexpr int PUERTO_DNS = 53;
 }
 
 DetectorBeaconing::DetectorBeaconing(int minimo_repeticiones, double intervalo_min_segundos,
@@ -50,6 +51,10 @@ VeredictoClasificacion DetectorBeaconing::clasificar(const EventoRed& evento) {
     }
 
     if (!es_inicio_conexion) {
+        return VeredictoClasificacion{};
+    }
+
+    if (evento.puerto_destino == PUERTO_DNS) {
         return VeredictoClasificacion{};
     }
 

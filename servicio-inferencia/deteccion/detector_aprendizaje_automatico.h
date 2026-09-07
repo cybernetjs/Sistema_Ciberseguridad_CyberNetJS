@@ -39,7 +39,7 @@ private:
     std::vector<double> media_;
     std::vector<double> desviacion_;
     double sesgo_inicial_ = 0.0;
-    double umbral_probabilidad_alerta_ = 0.999;
+    double umbral_probabilidad_alerta_ = 0.90;
     long paquetes_minimos_alerta_ = 30;
     double pps_minimo_alerta_ = 150.0;
     double cooldown_alerta_segundos_ = 60.0;

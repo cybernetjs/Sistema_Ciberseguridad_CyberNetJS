@@ -3,6 +3,7 @@
 #include <cmath>
 #include <fstream>
 
+#include "bitacora.h"
 #include "nlohmann/json.hpp"
 #include "reloj.h"
 
@@ -157,6 +158,19 @@ VeredictoClasificacion DetectorAprendizajeAutomatico::clasificar(const EventoRed
     long total_paquetes_flujo = evento.orig_pkts_flujo + evento.resp_pkts_flujo;
     double duracion_segura = evento.duracion > 0.001 ? evento.duracion : 0.001;
     double pps_flujo = static_cast<double>(total_paquetes_flujo) / duracion_segura;
+
+    static std::atomic<long> contador_diagnostico{0};
+    long contador_actual = contador_diagnostico.fetch_add(1);
+    if (probabilidad > 0.3 && contador_actual % 20 == 0) {
+        Bitacora::instancia().registrar_info(
+            "DIAGNOSTICO_IA probabilidad=" + std::to_string(probabilidad) +
+            " orig_pkts_flujo=" + std::to_string(evento.orig_pkts_flujo) +
+            " orig_ip_bytes_flujo=" + std::to_string(evento.orig_ip_bytes_flujo) +
+            " resp_pkts_flujo=" + std::to_string(evento.resp_pkts_flujo) +
+            " resp_ip_bytes_flujo=" + std::to_string(evento.resp_ip_bytes_flujo) +
+            " duracion=" + std::to_string(evento.duracion) +
+            " pps_flujo=" + std::to_string(pps_flujo));
+    }
 
     bool supera_probabilidad = probabilidad > umbral_probabilidad_alerta_;
     bool supera_volumen = total_paquetes_flujo >= paquetes_minimos_alerta_;
