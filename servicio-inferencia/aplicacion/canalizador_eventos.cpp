@@ -6,7 +6,7 @@ namespace sdi {
 
 CanalizadorEventos::CanalizadorEventos(std::vector<IClasificadorEventos*> clasificadores,
                                         INotificadorAlertas& notificador, IRegistradorEventos& registrador,
-                                        IClasificadorEventos* detector_diagnostico_ia)
+                                        DetectorAprendizajeAutomatico* detector_diagnostico_ia)
     : clasificadores_(std::move(clasificadores)),
       notificador_(notificador),
       registrador_(registrador),
@@ -30,7 +30,7 @@ void CanalizadorEventos::procesar(const EventoRed& evento) {
 
     VeredictoClasificacion veredicto_ia_diagnostico;
     if (detector_diagnostico_ia_ != nullptr) {
-        veredicto_ia_diagnostico = detector_diagnostico_ia_->clasificar(evento);
+        veredicto_ia_diagnostico = detector_diagnostico_ia_->diagnosticar(evento);
     }
 
     auto fin = std::chrono::steady_clock::now();

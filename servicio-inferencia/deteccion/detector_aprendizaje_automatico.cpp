@@ -122,6 +122,17 @@ double DetectorAprendizajeAutomatico::evaluar_arbol(const ArbolXgboost& arbol, c
     }
 }
 
+double DetectorAprendizajeAutomatico::calcular_probabilidad(const EventoRed& evento) const {
+    std::vector<double> caracteristicas = construir_vector_caracteristicas(evento);
+
+    double margen = sesgo_inicial_;
+    for (const auto& arbol : arboles_) {
+        margen += evaluar_arbol(arbol, caracteristicas);
+    }
+
+    return 1.0 / (1.0 + std::exp(-margen));
+}
+
 std::string DetectorAprendizajeAutomatico::construir_clave_flujo(const EventoRed& evento) const {
     std::string ip_a = evento.ip_origen;
     std::string ip_b = evento.ip_destino;
@@ -147,30 +158,10 @@ VeredictoClasificacion DetectorAprendizajeAutomatico::clasificar(const EventoRed
         return veredicto;
     }
 
-    std::vector<double> caracteristicas = construir_vector_caracteristicas(evento);
-
-    double margen = sesgo_inicial_;
-    for (const auto& arbol : arboles_) {
-        margen += evaluar_arbol(arbol, caracteristicas);
-    }
-
-    double probabilidad = 1.0 / (1.0 + std::exp(-margen));
+    double probabilidad = calcular_probabilidad(evento);
     long total_paquetes_flujo = evento.orig_pkts_flujo + evento.resp_pkts_flujo;
     double duracion_segura = evento.duracion > 0.001 ? evento.duracion : 0.001;
     double pps_flujo = static_cast<double>(total_paquetes_flujo) / duracion_segura;
-
-    static std::atomic<long> contador_diagnostico{0};
-    long contador_actual = contador_diagnostico.fetch_add(1);
-    if (probabilidad > 0.3 && contador_actual % 20 == 0) {
-        Bitacora::instancia().registrar_info(
-            "DIAGNOSTICO_IA probabilidad=" + std::to_string(probabilidad) +
-            " orig_pkts_flujo=" + std::to_string(evento.orig_pkts_flujo) +
-            " orig_ip_bytes_flujo=" + std::to_string(evento.orig_ip_bytes_flujo) +
-            " resp_pkts_flujo=" + std::to_string(evento.resp_pkts_flujo) +
-            " resp_ip_bytes_flujo=" + std::to_string(evento.resp_ip_bytes_flujo) +
-            " duracion=" + std::to_string(evento.duracion) +
-            " pps_flujo=" + std::to_string(pps_flujo));
-    }
 
     bool supera_probabilidad = probabilidad > umbral_probabilidad_alerta_;
     bool supera_volumen = total_paquetes_flujo >= paquetes_minimos_alerta_;
@@ -192,6 +183,46 @@ VeredictoClasificacion DetectorAprendizajeAutomatico::clasificar(const EventoRed
 
     veredicto.es_amenaza = true;
     veredicto.etiqueta = "ataque";
+    veredicto.confianza = probabilidad;
+
+    return veredicto;
+}
+
+VeredictoClasificacion DetectorAprendizajeAutomatico::diagnosticar(const EventoRed& evento) {
+    VeredictoClasificacion veredicto;
+
+    if (!modelo_cargado_) {
+        return veredicto;
+    }
+
+    if (evento.protocolo != PROTOCOLO_TCP && evento.protocolo != PROTOCOLO_UDP) {
+        return veredicto;
+    }
+
+    double probabilidad = calcular_probabilidad(evento);
+    long total_paquetes_flujo = evento.orig_pkts_flujo + evento.resp_pkts_flujo;
+    double duracion_segura = evento.duracion > 0.001 ? evento.duracion : 0.001;
+    double pps_flujo = static_cast<double>(total_paquetes_flujo) / duracion_segura;
+
+    static std::atomic<long> contador_diagnostico{0};
+    long contador_actual = contador_diagnostico.fetch_add(1);
+    if (probabilidad > 0.3 && contador_actual % 20 == 0) {
+        Bitacora::instancia().registrar_info(
+            "DIAGNOSTICO_IA probabilidad=" + std::to_string(probabilidad) +
+            " orig_pkts_flujo=" + std::to_string(evento.orig_pkts_flujo) +
+            " orig_ip_bytes_flujo=" + std::to_string(evento.orig_ip_bytes_flujo) +
+            " resp_pkts_flujo=" + std::to_string(evento.resp_pkts_flujo) +
+            " resp_ip_bytes_flujo=" + std::to_string(evento.resp_ip_bytes_flujo) +
+            " duracion=" + std::to_string(evento.duracion) +
+            " pps_flujo=" + std::to_string(pps_flujo));
+    }
+
+    bool supera_probabilidad = probabilidad > umbral_probabilidad_alerta_;
+    bool supera_volumen = total_paquetes_flujo >= paquetes_minimos_alerta_;
+    bool supera_tasa = pps_flujo >= pps_minimo_alerta_;
+
+    veredicto.es_amenaza = supera_probabilidad && supera_volumen && supera_tasa;
+    veredicto.etiqueta = veredicto.es_amenaza ? "ataque" : "";
     veredicto.confianza = probabilidad;
 
     return veredicto;

@@ -9,6 +9,7 @@ public sealed class RegistroEvento
     public double MarcaTiempoUnix { get; set; }
     public string IpOrigen { get; set; } = "";
     public string IpDestino { get; set; } = "";
+    public int PuertoOrigen { get; set; }
     public int PuertoDestino { get; set; }
     public int Protocolo { get; set; }
     public double Duracion { get; set; }
@@ -27,11 +28,18 @@ public sealed class RegistroEvento
     public double FluctuacionDestino { get; set; }
     public int ConteoServicioOrigen { get; set; }
     public int ConteoDestinoReciente { get; set; }
+    public long OrigPktsFlujo { get; set; }
+    public long OrigIpBytesFlujo { get; set; }
+    public long RespPktsFlujo { get; set; }
+    public long RespIpBytesFlujo { get; set; }
+    public int MissedBytes { get; set; }
     public string Clasificador { get; set; } = "";
     public bool EsAmenaza { get; set; }
     public string Etiqueta { get; set; } = "";
     public double Confianza { get; set; }
     public double TiempoRespuestaMs { get; set; }
+    public bool VeredictoIaEsAmenaza { get; set; }
+    public double VeredictoIaConfianza { get; set; }
 
     public string HoraTexto => DateTimeOffset
         .FromUnixTimeMilliseconds((long)(MarcaTiempoUnix * 1000))

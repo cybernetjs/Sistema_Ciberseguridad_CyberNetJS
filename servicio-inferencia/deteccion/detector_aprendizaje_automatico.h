@@ -25,11 +25,13 @@ public:
     bool cargar_modelo(const std::string& ruta_modelo);
 
     VeredictoClasificacion clasificar(const EventoRed& evento) override;
+    VeredictoClasificacion diagnosticar(const EventoRed& evento);
     std::string nombre() const override;
 
 private:
     std::vector<double> construir_vector_caracteristicas(const EventoRed& evento) const;
     double evaluar_arbol(const ArbolXgboost& arbol, const std::vector<double>& caracteristicas) const;
+    double calcular_probabilidad(const EventoRed& evento) const;
     std::string construir_clave_flujo(const EventoRed& evento) const;
 
     std::atomic<bool> modelo_cargado_{false};
