@@ -97,6 +97,14 @@ std::vector<double> DetectorAprendizajeAutomatico::construir_vector_caracteristi
             valor = static_cast<double>(evento.orig_ip_bytes_flujo);
         } else if (nombre == "resp_bytes") {
             valor = static_cast<double>(evento.resp_ip_bytes_flujo);
+        } else if (nombre == "conexiones_origen_5s") {
+            valor = static_cast<double>(evento.conexiones_origen_5s);
+        } else if (nombre == "puertos_distintos_origen_5s") {
+            valor = static_cast<double>(evento.puertos_distintos_origen_5s);
+        } else if (nombre == "ips_distintas_origen_60s") {
+            valor = static_cast<double>(evento.ips_distintas_origen_60s);
+        } else if (nombre == "conexiones_mismo_destino_300s") {
+            valor = static_cast<double>(evento.conexiones_mismo_destino_300s);
         }
         crudo.push_back(valor);
     }

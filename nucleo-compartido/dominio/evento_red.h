@@ -33,6 +33,10 @@ struct EventoRed {
     int missed_bytes = 0;
     std::string consulta_dns;
     bool es_syn = false;
+    int conexiones_origen_5s = 0;
+    int puertos_distintos_origen_5s = 0;
+    int ips_distintas_origen_60s = 0;
+    int conexiones_mismo_destino_300s = 0;
 };
 
 }

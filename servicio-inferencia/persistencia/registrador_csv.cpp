@@ -20,7 +20,8 @@ const std::string ENCABEZADO_ESPERADO =
     "conteo_servicio_origen,conteo_destino_reciente,"
     "orig_pkts_flujo,orig_ip_bytes_flujo,resp_pkts_flujo,resp_ip_bytes_flujo,missed_bytes,"
     "clasificador,es_amenaza,etiqueta,confianza,tiempo_respuesta_ms,"
-    "veredicto_ia_es_amenaza,veredicto_ia_confianza";
+    "veredicto_ia_es_amenaza,veredicto_ia_confianza,"
+    "conexiones_origen_5s,puertos_distintos_origen_5s,ips_distintas_origen_60s,conexiones_mismo_destino_300s";
 
 std::string campo_csv(const std::string& valor) {
     bool necesita_comillas = valor.find(',') != std::string::npos ||
@@ -134,7 +135,11 @@ void RegistradorCsv::registrar(const EventoRed& evento, const VeredictoClasifica
          << veredicto.confianza << ','
          << tiempo_respuesta_ms << ','
          << (veredicto_ia_diagnostico.es_amenaza ? 1 : 0) << ','
-         << veredicto_ia_diagnostico.confianza << '\n';
+         << veredicto_ia_diagnostico.confianza << ','
+         << evento.conexiones_origen_5s << ','
+         << evento.puertos_distintos_origen_5s << ','
+         << evento.ips_distintas_origen_60s << ','
+         << evento.conexiones_mismo_destino_300s << '\n';
 
     archivo_ << fila.str();
     archivo_.flush();
