@@ -1,0 +1,139 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "CyberNetJS — IDS/IPS Architecture (subcarpetas visuales)",
+    "quality_profile": "showcase",
+    "views": [
+      { "id": "all", "label": "Full Architecture", "focus": ["cap-entrada", "cap-captura", "cap-dominio", "cap-extraccion", "cap-transporte", "cap-aplicacion", "inf-entrada", "inf-transporte", "inf-dominio", "inf-aplicacion", "inf-deteccion", "inf-notificacion", "inf-persistencia", "sh-dominio", "sh-diagnostico", "sh-ejecucion", "sh-red", "sh-tiempo", "pan-modelos", "pan-vista", "pan-servicios", "train-pipe", "datasets"], "note": "All subcarpetas as nodes" }
+    ]
+  },
+  "layout": {
+    "mode": "grid",
+    "origin": [40, 40],
+    "cols": 12,
+    "gapX": 28,
+    "gapY": 110,
+    "cellW": 110,
+    "cellH": 56
+  },
+  "components": [
+    { "id": "sh-dominio", "type": "backend", "label": "dominio/", "sublabel": "EventoRed 27 campos", "pos": [355, 50], "size": [110, 56] },
+    { "id": "sh-diagnostico", "type": "backend", "label": "diagnostico/", "sublabel": "Bitacora singleton", "pos": [493, 50], "size": [110, 56] },
+    { "id": "sh-ejecucion", "type": "backend", "label": "ejecucion/", "sublabel": "ControladorApagado", "pos": [631, 50], "size": [110, 56] },
+    { "id": "sh-red", "type": "backend", "label": "red/", "sublabel": "compat_sockets", "pos": [769, 50], "size": [110, 56] },
+    { "id": "sh-tiempo", "type": "backend", "label": "tiempo/", "sublabel": "reloj.h", "pos": [907, 50], "size": [110, 56] },
+
+    { "id": "cap-entrada", "type": "backend", "label": "punto_entrada/", "sublabel": "main() · BPF", "pos": [75, 260], "size": [110, 56] },
+    { "id": "cap-captura", "type": "backend", "label": "captura/", "sublabel": "CapturadorPaquetes", "pos": [213, 260], "size": [110, 56] },
+    { "id": "cap-dominio", "type": "backend", "label": "dominio/", "sublabel": "RastreadorFlujos", "pos": [351, 260], "size": [110, 56] },
+    { "id": "cap-extraccion", "type": "backend", "label": "extraccion/", "sublabel": "extraer_caract()", "pos": [489, 260], "size": [110, 56] },
+    { "id": "cap-transporte", "type": "backend", "label": "transporte/", "sublabel": "TransmisorJson", "pos": [627, 260], "size": [110, 56] },
+    { "id": "cap-aplicacion", "type": "backend", "label": "aplicacion/", "sublabel": "LoteadorEventos", "pos": [765, 260], "size": [110, 56] },
+
+    { "id": "inf-entrada", "type": "backend", "label": "punto_entrada/", "sublabel": "principal.cpp", "pos": [38, 470], "size": [110, 56] },
+    { "id": "inf-transporte", "type": "backend", "label": "transporte/", "sublabel": "ServidorTcp", "pos": [176, 470], "size": [110, 56] },
+    { "id": "inf-dominio", "type": "backend", "label": "dominio/", "sublabel": "IClasificador", "pos": [314, 470], "size": [110, 56] },
+    { "id": "inf-aplicacion", "type": "backend", "label": "aplicacion/", "sublabel": "CanalizadorEventos", "pos": [452, 470], "size": [110, 56] },
+    { "id": "inf-deteccion", "type": "backend", "label": "deteccion/", "sublabel": "6 clasificadores", "pos": [590, 470], "size": [110, 56] },
+    { "id": "inf-notificacion", "type": "backend", "label": "notificacion/", "sublabel": "NotificadorConsola", "pos": [728, 470], "size": [110, 56] },
+    { "id": "inf-persistencia", "type": "backend", "label": "persistencia/", "sublabel": "RegistradorCsv", "pos": [866, 470], "size": [110, 56] },
+
+    { "id": "pan-modelos", "type": "frontend", "label": "Modelos/", "sublabel": "RegistroEvento", "pos": [355, 680], "size": [110, 56] },
+    { "id": "pan-vista", "type": "frontend", "label": "ModelosVista/", "sublabel": "VM MVVM", "pos": [493, 680], "size": [110, 56] },
+    { "id": "pan-servicios", "type": "frontend", "label": "Servicios/", "sublabel": "LectorCsv", "pos": [631, 680], "size": [110, 56] },
+
+    { "id": "train-pipe", "type": "external", "label": "Training", "sublabel": "Python XGBoost", "pos": [820, 680], "size": [110, 56] },
+    { "id": "datasets", "type": "database", "label": "Datasets", "sublabel": "IoT-23 CICIoT", "pos": [958, 680], "size": [110, 56] }
+  ],
+  "boundaries": [
+    { "kind": "security-group", "label": "Untrusted IoT Network", "wraps": ["cap-entrada", "cap-captura", "cap-dominio", "cap-extraccion", "cap-transporte", "cap-aplicacion"] },
+    { "kind": "region", "label": "nucleo-compartido · C++17", "wraps": ["sh-dominio", "sh-diagnostico", "sh-ejecucion", "sh-red", "sh-tiempo"] },
+    { "kind": "region", "label": "sistema-captura · Raspberry Pi 5", "wraps": ["cap-entrada", "cap-captura", "cap-dominio", "cap-extraccion", "cap-transporte", "cap-aplicacion"] },
+    { "kind": "region", "label": "servicio-inferencia · Server", "wraps": ["inf-entrada", "inf-transporte", "inf-dominio", "inf-aplicacion", "inf-deteccion", "inf-notificacion", "inf-persistencia"] },
+    { "kind": "region", "label": "panel-control · WinUI3 C# .NET8", "wraps": ["pan-modelos", "pan-vista", "pan-servicios"] }
+  ],
+  "connections": [
+    { "id": "c1", "from": "cap-transporte", "to": "inf-transporte", "label": "TCP:9999 JSON batch", "variant": "emphasis", "fromSide": "bottom", "toSide": "top", "labelAt": [350, 380] },
+    { "id": "c2", "from": "inf-persistencia", "to": "pan-servicios", "label": "CSV 34 cols append", "variant": "default", "fromSide": "bottom", "toSide": "top", "labelAt": [800, 590] },
+    { "id": "c3", "from": "datasets", "to": "train-pipe", "label": "CSV preprocess", "variant": "dashed", "fromSide": "left", "toSide": "right", "labelAt": [920, 750] }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "sistema-captura — Flujo interno entre subcarpetas",
+      "items": [
+        "punto_entrada/ → main() · parseArgs() · compose() · BPF=\"ip and not port 9999\"",
+        "captura/ → class CapturadorPaquetes {abrir(), escuchar(ManejadorPaquete), detener()} · libpcap · snaplen=65535 · promisc=1",
+        "dominio/ → class RastreadorFlujos {actualizar_flujo(), ciclo_limpieza()} · struct ClaveFlujo · struct EstadoFlujo · struct ResultadoFlujo",
+        "extraccion/ → free extraer_caracteristicas() → optional<EventoRed> · Ethernet/SLL/SLL2/Raw → IPv4 → TCP/UDP",
+        "aplicacion/ → class LoteadorEventos {agregar_evento(), vaciar(), iniciar/detener_envio()} · batch=25 · interval=1s · RESPALDO_MAXIMO=5000",
+        "transporte/ → interface ITransmisorEventos · class SerializadorJson {evento_a_json(), lote_a_json()} · class TransmisorJson TCP",
+        "Flujo: punto_entrada → captura → extraccion → dominio → aplicacion → transporte"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "servicio-inferencia — Flujo interno entre subcarpetas",
+      "items": [
+        "punto_entrada/ → principal.cpp · wiring + init",
+        "transporte/ → class ServidorTcp {iniciar(), ejecutar(), detener()} · free decodificar_eventos() → vector<EventoRed>",
+        "dominio/ → interface IClasificadorEventos {clasificar()→VeredictoClasificacion} · interface IRegistradorEventos · interface INotificadorAlertas",
+        "aplicacion/ → class CanalizadorEventos {procesar()} · pipeline: Reconocimiento→FuerzaBruta→DGA→Beaconing→Firmas→ML",
+        "deteccion/ → DetectorReconocimiento (>15 ports/5s) · DetectorFuerzaBruta (>8 SYN/300s) · DetectorDGA (>6 dom/30s) · DetectorBeaconing (CV≤0.15) · DetectorFirmas (23,2323,7547) · DetectorML (XGBoost sigmoid)",
+        "notificacion/ → class NotificadorConsola {notificar()} → Bitacora ADVERTENCIA",
+        "persistencia/ → class RegistradorCsv {registrar()} → append · mutex · 34-col · auto-reset",
+        "Flujo: punto_entrada → transporte → aplicacion → deteccion → notificacion + persistencia"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "nucleo-compartido — 5 subcarpetas · contenido",
+      "items": [
+        "dominio/ → struct EventoRed {27 campos}: ip_origen, ip_destino, puerto_origen, puerto_destino, protocolo, duracion, paquetes/bytes orig/dest, tasa, ttl, carga, intervalo, fluctuacion, conteo_servicio, orig/resp_pkts/bytes_flujo, missed_bytes, consulta_dns, es_syn",
+        "diagnostico/ → class Bitacora (Meyer's singleton) {instancia(), registrar_info(), registrar_advertencia(), registrar_error()} · [HH:MM:SS] [NIVEL] msg",
+        "ejecucion/ → class ControladorApagado (singleton) {activar(), debe_continuar()} · atomic<bool> · SIGINT/SIGTERM",
+        "red/ → tipo_socket, inicializar_sockets(), cerrar_socket(), esperar_socket() · Win32: SOCKET+WSAPoll · Linux: int+poll",
+        "tiempo/ → inline double segundos_actuales() → duration<double>(system_clock::now())",
+        "Usado por: sistema-captura + servicio-inferencia (header-only + implementations)"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "panel-control — 3 subcarpetas MVVM",
+      "items": [
+        "Modelos/ → sealed class RegistroEvento {34 propiedades CSV} · sealed class MetricasModelo [JsonPropertyName] {Accuracy, Precision, Recall, F1Score, MatrizConfusion[][], TiempoPrediccionMsPorRegistro}",
+        "ModelosVista/ → sealed class ModeloVistaPrincipal : INotifyPropertyChanged · Eventos/EventosFiltrados/LineasLog ObservableCollections · MaxEventos=200 · SoloAmenazas",
+        "Servicios/ → class LectorEventosCsv {IniciarAsync(), ParsearLinea()} · 500ms poll · 34-col · class LectorMetricas {LeerAsync()} JSON",
+        "Root: App.xaml.cs → MainWindow.xaml → 7 metric cards + ToggleSwitch + ListView + log console",
+        "Env: PANEL_RUTA_CSV, PANEL_RUTA_METRICAS, PANEL_RUTA_LOG"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "entrenamiento-modelos — 9 scripts Python",
+      "items": [
+        "cargar_datos.py → cargar_dataset(ruta): CSV o concatena directorio",
+        "preprocesamiento.py → limpiar · separar_binario · codificar_etiquetas · normalizar · balancear SMOTE · SelectKBest",
+        "entrenar_xgboost.py → XGBClassifier(300 trees, depth=6, lr=0.1) → model.json + joblib + metricas.json",
+        "exportar_arboles.py → extrae árboles a JSON plano · sesgo = log(base/(1-base))",
+        "exportar_parametros.py → media[] y desviacion[] del joblib a JSON",
+        "convertir_iot23.py → Zeek conn.log.labeled TSV → CSV",
+        "etiquetar_capturas_propias.py → alert CSV → (ip_origen,ip_destino) pairs → Malicious/benign",
+        "muestrear_datos.py → fraccion=0.01, bloque=200000 · semilla=42",
+        "verificar_ts.py · verificar_limpieza.py · verificar_columnas.py"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "Modelos y Datasets",
+      "items": [
+        "IoT-23: F1=99.87% · 9 features · 9.5M train · 1.3M test · 0.0013ms/reg",
+        "CICIoT2023: F1=98.06% · 15 features · 7.6M train · 993K test · 0.0008ms/reg",
+        "modelos-entrenados/: modelo_iot23.json + _arboles.json + _metricas.json + _preprocesamiento.joblib + _parametros.json",
+        "CMake: sistema_captura → 8 .cpp · servicio_inferencia → 14 .cpp",
+        "constantes: PUERTO=9999, BATCH=25, INTERVALO=1s, INTERFAZ=br0, LIMITE_LINEA=8MB"
+      ]
+    }
+  ]
+}

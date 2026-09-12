@@ -1,0 +1,295 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "CyberNetJS — IDS/IPS Architecture",
+    "quality_profile": "showcase",
+    "views": [
+      { "id": "capture-path", "label": "Packet Capture Path", "focus": ["iot-devices", "router", "capture-engine", "inference-server"], "note": "From raw IoT traffic to classified events" },
+      { "id": "detection-pipeline", "label": "Detection Pipeline", "focus": ["inference-server", "shared-core", "trained-models"], "note": "Six detectors running in sequence" },
+      { "id": "visualization", "label": "Monitoring & Display", "focus": ["inference-server", "csv-events", "panel-control"], "note": "CSV tailing to desktop GUI" }
+    ]
+  },
+  "layout": {
+    "mode": "grid",
+    "origin": [40, 40],
+    "cols": 12,
+    "gapX": 40,
+    "gapY": 120,
+    "cellW": 140,
+    "cellH": 60
+  },
+  "components": [
+    {
+      "id": "iot-devices",
+      "type": "external",
+      "label": "IoT Devices",
+      "sublabel": "Cameras, bulbs, sensors",
+      "pos": [40, 200],
+      "size": [130, 60]
+    },
+    {
+      "id": "router",
+      "type": "cloud",
+      "label": "Archer AX12",
+      "sublabel": "Router / DHCP / NAT",
+      "pos": [220, 200],
+      "size": [140, 60],
+      "tag": "WiFi + Ethernet"
+    },
+    {
+      "id": "capture-engine",
+      "type": "backend",
+      "label": "Capture Engine",
+      "sublabel": "sistema-captura · C++17",
+      "pos": [410, 200],
+      "size": [150, 60],
+      "tag": "Raspberry Pi 5"
+    },
+    {
+      "id": "inference-server",
+      "type": "backend",
+      "label": "Inference Server",
+      "sublabel": "servicio-inferencia · C++17",
+      "pos": [640, 200],
+      "size": [150, 60],
+      "tag": "TCP :9999"
+    },
+    {
+      "id": "shared-core",
+      "type": "backend",
+      "label": "Shared Core",
+      "sublabel": "nucleo-compartido",
+      "pos": [640, 60],
+      "size": [150, 60],
+      "tag": "Domain · Logging · Sockets"
+    },
+    {
+      "id": "trained-models",
+      "type": "database",
+      "label": "Trained Models",
+      "sublabel": "XGBoost · 300 trees",
+      "pos": [900, 60],
+      "size": [150, 60],
+      "tag": "JSON tree format"
+    },
+    {
+      "id": "csv-events",
+      "type": "database",
+      "label": "eventos_procesados",
+      "sublabel": "CSV append-only · 34 cols",
+      "pos": [900, 200],
+      "size": [150, 60]
+    },
+    {
+      "id": "panel-control",
+      "type": "frontend",
+      "label": "Panel Control",
+      "sublabel": "WinUI 3 · C# / .NET 8",
+      "pos": [1120, 200],
+      "size": [150, 60],
+      "tag": "Desktop GUI"
+    },
+    {
+      "id": "training-pipeline",
+      "type": "external",
+      "label": "Training Pipeline",
+      "sublabel": "Offline · Python · XGBoost",
+      "pos": [760, 440],
+      "size": [150, 60]
+    },
+    {
+      "id": "datasets",
+      "type": "external",
+      "label": "Datasets",
+      "sublabel": "IoT-23 · CICIoT2023",
+      "pos": [1000, 440],
+      "size": [150, 60]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "security-group",
+      "label": "Untrusted — IoT Network",
+      "wraps": ["iot-devices", "router"]
+    },
+    {
+      "kind": "region",
+      "label": "Raspberry Pi 5 · Bridge Mode",
+      "wraps": ["capture-engine"]
+    },
+    {
+      "kind": "region",
+      "label": "Laptop / Server",
+      "wraps": ["inference-server", "shared-core", "trained-models", "csv-events", "panel-control"]
+    },
+    {
+      "kind": "security-group",
+      "label": "Detection Trust Zone",
+      "wraps": ["inference-server", "shared-core", "trained-models"]
+    }
+  ],
+  "connections": [
+    {
+      "id": "traffic-flow",
+      "from": "iot-devices",
+      "to": "router",
+      "label": "Ethernet frames",
+      "variant": "default",
+      "labelAt": [175, 275]
+    },
+    {
+      "id": "bridge-capture",
+      "from": "router",
+      "to": "capture-engine",
+      "label": "libpcap · br0",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "left",
+      "labelAt": [355, 275]
+    },
+    {
+      "id": "tcp-events",
+      "from": "capture-engine",
+      "to": "inference-server",
+      "label": "TCP :9999 · JSON · 25 evt/batch",
+      "variant": "emphasis",
+      "labelAt": [600, 275]
+    },
+    {
+      "id": "csv-write",
+      "from": "inference-server",
+      "to": "csv-events",
+      "label": "Append CSV · 34 cols",
+      "variant": "default",
+      "fromSide": "right",
+      "toSide": "left",
+      "labelAt": [960, 275]
+    },
+    {
+      "id": "csv-read",
+      "from": "csv-events",
+      "to": "panel-control",
+      "label": "File tail · 500ms",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "left",
+      "labelAt": [1175, 275]
+    },
+    {
+      "id": "load-model",
+      "from": "trained-models",
+      "to": "inference-server",
+      "label": "JSON trees + params",
+      "variant": "default",
+      "fromSide": "left",
+      "toSide": "right",
+      "labelAt": [870, 145]
+    },
+    {
+      "id": "dataset-load",
+      "from": "datasets",
+      "to": "training-pipeline",
+      "label": "CSV → preprocess",
+      "variant": "dashed",
+      "fromSide": "left",
+      "toSide": "right",
+      "labelAt": [945, 510]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Capture Engine — Data Flow",
+      "items": [
+        "Input: raw Ethernet frames via libpcap on br0",
+        "BPF: \"ip and not port 9999\"",
+        "Parse: Ethernet → IP → TCP/UDP → DNS",
+        "Output: EventoRed struct (27 fields)",
+        "Batch: 25 events or 1s flush",
+        "Transport: TCP socket → JSON newline-delimited",
+        "Reconnect: 3 retries · 250ms delay · 5000 event buffer"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Inference Server — Detection Pipeline",
+      "items": [
+        "Input: TCP :9999 · newline-delimited JSON",
+        "Decode: json::parse → vector<EventoRed>",
+        "Detector 1: Port Scan (>15 ports / 5s)",
+        "Detector 2: Brute Force (>8 SYN / credential ports / 300s)",
+        "Detector 3: DGA (>6 suspicious domains / 30s)",
+        "Detector 4: Beaconing (CV ≤ 0.15 · 10-180s · 10+ reps)",
+        "Detector 5: Signatures (IoT exploit ports + DoS >300 pps)",
+        "Detector 6: ML XGBoost (prob > 0.90 · ≥30 pkts · ≥150 pps)",
+        "First match wins · 60s cooldown per flow"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "JSON Transport Format",
+      "items": [
+        "Fields: ip_origen, ip_destino, puerto_origen, puerto_destino",
+        "Protocol, duration, packets/bytes per direction",
+        "Transfer rate, TTL, payload size, interval, fluctuation",
+        "Flow counters: orig_pkts, resp_pkts, ip_bytes",
+        "Flags: es_syn (bool), consulta_dns (string)",
+        "Batch: JSON array, newline-terminated",
+        "Server response: none (fire-and-forget)"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Trust Boundaries & Security",
+      "items": [
+        "IoT network: untrusted — captured via bridge",
+        "TCP channel: NO TLS · NO auth · plaintext JSON",
+        "sistema-captura requires root (sudo) for libpcap",
+        "JSON parsing: try/catch + field defaults",
+        "CSV: mutex-protected · header mismatch → reset",
+        "Panel Control: read-only file access",
+        "ML model: single load at startup"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "External Dependencies",
+      "items": [
+        "libpcap — raw packet capture (apt)",
+        "nlohmann/json — vendored header-only",
+        "Python 3.10+ — pandas, xgboost, scikit-learn",
+        "C# / WinUI 3 — .NET 8 · Windows App SDK",
+        "Datasets: IoT-23 (Zeek), CICIoT2023",
+        "No cloud APIs · No databases · No external services",
+        "Fully self-contained on-premises system"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "Offline Training Pipeline",
+      "items": [
+        "Training: Python scripts under entrenamiento-modelos/",
+        "Datasets: IoT-23 (Zeek conn.log), CICIoT2023",
+        "Pipeline: load → clean → SMOTE → SelectKBest → XGBoost",
+        "Export: exportar_arboles.py → modelo_iot23_arboles.json",
+        "IoT-23: 99.87% F1 · 9 features · 9.5M training records",
+        "CICIoT2023: 98.06% F1 · 15 features · 7.6M records",
+        "Model loads once at inference-server startup"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "Panel Control — Monitoring",
+      "items": [
+        "WinUI 3 desktop app · .NET 8 · C#",
+        "CSV tailing: polls every 500ms",
+        "Metrics: reads metricas.json every 10s",
+        "Log console: tails servicio.log every 500ms",
+        "Buffer: 200 events + 500 log lines",
+        "7 metric cards: events, alerts, response time",
+        "Threat events highlighted red · filterable"
+      ]
+    }
+  ]
+}
