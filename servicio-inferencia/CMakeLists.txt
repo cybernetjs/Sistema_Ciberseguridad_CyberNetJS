@@ -20,6 +20,7 @@ add_executable(servicio_inferencia
     deteccion/detector_fuerza_bruta.cpp
     deteccion/detector_dga.cpp
     deteccion/detector_beaconing.cpp
+    deteccion/rastreador_agregado_origen.cpp
     notificacion/notificador_consola.cpp
     persistencia/registrador_csv.cpp
     aplicacion/canalizador_eventos.cpp
