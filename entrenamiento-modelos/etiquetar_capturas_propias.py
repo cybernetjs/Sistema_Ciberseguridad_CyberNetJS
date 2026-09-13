@@ -33,8 +33,12 @@ def main():
     df["label"] = df.apply(lambda fila: etiquetar_fila(fila, pares), axis=1)
 
     columnas_salida = {
+        "marca_tiempo_unix": "ts",
+        "ip_origen": "id.orig_h",
+        "ip_destino": "id.resp_h",
         "puerto_origen": "id.orig_p",
         "puerto_destino": "id.resp_p",
+        "protocolo": "proto",
         "duracion": "duration",
         "bytes_origen": "orig_bytes",
         "bytes_destino": "resp_bytes",
@@ -45,8 +49,21 @@ def main():
         "resp_ip_bytes_flujo": "resp_ip_bytes",
     }
 
-    df_salida = df.rename(columns=columnas_salida)
-    columnas_finales = list(columnas_salida.values()) + ["label"]
+    columnas_presentes = {origen: destino for origen, destino in columnas_salida.items() if origen in df.columns}
+
+    df_salida = df.rename(columns=columnas_presentes)
+
+    if "conexiones_origen_5s" in df.columns:
+        columnas_finales = list(columnas_presentes.values()) + [
+            "conexiones_origen_5s",
+            "puertos_distintos_origen_5s",
+            "ips_distintas_origen_60s",
+            "conexiones_mismo_destino_300s",
+            "label",
+        ]
+    else:
+        columnas_finales = list(columnas_presentes.values()) + ["label"]
+
     df_salida = df_salida[columnas_finales]
     df_salida.to_csv(argumentos.salida, index=False)
 
