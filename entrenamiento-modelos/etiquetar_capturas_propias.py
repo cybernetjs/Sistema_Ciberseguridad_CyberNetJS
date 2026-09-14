@@ -11,17 +11,18 @@ def construir_pares_ataque(df):
     return pares
 
 
-def etiquetar_fila(fila, pares):
+def etiquetar_fila(fila, pares, tipo_ataque):
     clave = (fila["ip_origen"], fila["ip_destino"])
     if clave in pares:
-        return "Malicious"
-    return "benign"
+        return "Malicious", tipo_ataque if tipo_ataque else "otro_ataque"
+    return "benign", "benigno"
 
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--eventos", required=True)
     parser.add_argument("--salida", required=True)
+    parser.add_argument("--tipo", default="")
     argumentos = parser.parse_args()
 
     df = pd.read_csv(argumentos.eventos, low_memory=False)
@@ -30,7 +31,9 @@ def main():
     if not pares:
         print("No se encontraron alertas en este CSV, todo el archivo se etiquetara como benigno")
 
-    df["label"] = df.apply(lambda fila: etiquetar_fila(fila, pares), axis=1)
+    resultados = df.apply(lambda fila: etiquetar_fila(fila, pares, argumentos.tipo), axis=1)
+    df["label"] = [r[0] for r in resultados]
+    df["tipo"] = [r[1] for r in resultados]
 
     columnas_salida = {
         "marca_tiempo_unix": "ts",
@@ -53,24 +56,20 @@ def main():
 
     df_salida = df.rename(columns=columnas_presentes)
 
+    columnas_finales = list(columnas_presentes.values())
     if "conexiones_origen_5s" in df.columns:
-        columnas_finales = list(columnas_presentes.values()) + [
+        columnas_finales += [
             "conexiones_origen_5s",
             "puertos_distintos_origen_5s",
             "ips_distintas_origen_60s",
             "conexiones_mismo_destino_300s",
-            "label",
         ]
-    else:
-        columnas_finales = list(columnas_presentes.values()) + ["label"]
+    columnas_finales += ["label", "tipo"]
 
     df_salida = df_salida[columnas_finales]
     df_salida.to_csv(argumentos.salida, index=False)
 
-    total_malicioso = (df["label"] == "Malicious").sum()
-    total_benigno = (df["label"] == "benign").sum()
-    print(f"Filas etiquetadas como Malicious: {total_malicioso}")
-    print(f"Filas etiquetadas como benign: {total_benigno}")
+    print(df_salida["tipo"].value_counts())
 
 
 if __name__ == "__main__":

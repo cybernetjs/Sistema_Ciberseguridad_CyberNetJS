@@ -1,9 +1,9 @@
 #include "detector_aprendizaje_automatico.h"
 
+#include <algorithm>
 #include <cmath>
 #include <fstream>
 
-#include "bitacora.h"
 #include "nlohmann/json.hpp"
 #include "reloj.h"
 
@@ -56,7 +56,9 @@ bool DetectorAprendizajeAutomatico::cargar_modelo(const std::string& ruta_modelo
     orden_caracteristicas_ = contenido.at("orden_caracteristicas").get<std::vector<std::string>>();
     media_ = contenido.at("media").get<std::vector<double>>();
     desviacion_ = contenido.at("desviacion").get<std::vector<double>>();
-    sesgo_inicial_ = contenido.at("sesgo_inicial").get<double>();
+    sesgo_inicial_ = contenido.at("sesgo_inicial").get<std::vector<double>>();
+    num_clases_ = contenido.value("num_clases", 1);
+    nombres_clases_ = contenido.value("clases", std::vector<std::string>{"benigno", "ataque"});
 
     arboles_.clear();
     for (const auto& arbol_json : contenido.at("arboles")) {
@@ -97,6 +99,8 @@ std::vector<double> DetectorAprendizajeAutomatico::construir_vector_caracteristi
             valor = static_cast<double>(evento.orig_ip_bytes_flujo);
         } else if (nombre == "resp_bytes") {
             valor = static_cast<double>(evento.resp_ip_bytes_flujo);
+        } else if (nombre == "proto") {
+            valor = static_cast<double>(evento.protocolo);
         } else if (nombre == "conexiones_origen_5s") {
             valor = static_cast<double>(evento.conexiones_origen_5s);
         } else if (nombre == "puertos_distintos_origen_5s") {
@@ -130,17 +134,6 @@ double DetectorAprendizajeAutomatico::evaluar_arbol(const ArbolXgboost& arbol, c
     }
 }
 
-double DetectorAprendizajeAutomatico::calcular_probabilidad(const EventoRed& evento) const {
-    std::vector<double> caracteristicas = construir_vector_caracteristicas(evento);
-
-    double margen = sesgo_inicial_;
-    for (const auto& arbol : arboles_) {
-        margen += evaluar_arbol(arbol, caracteristicas);
-    }
-
-    return 1.0 / (1.0 + std::exp(-margen));
-}
-
 std::string DetectorAprendizajeAutomatico::construir_clave_flujo(const EventoRed& evento) const {
     std::string ip_a = evento.ip_origen;
     std::string ip_b = evento.ip_destino;
@@ -155,6 +148,62 @@ std::string DetectorAprendizajeAutomatico::construir_clave_flujo(const EventoRed
            std::to_string(evento.protocolo);
 }
 
+bool DetectorAprendizajeAutomatico::clase_requiere_gate_volumen(const std::string& clase) const {
+    return clase == "ddos" || clase == "dos";
+}
+
+DetectorAprendizajeAutomatico::ResultadoModelo DetectorAprendizajeAutomatico::evaluar_modelo(const EventoRed& evento) const {
+    ResultadoModelo resultado;
+
+    std::vector<double> caracteristicas = construir_vector_caracteristicas(evento);
+
+    std::vector<double> margenes(num_clases_, 0.0);
+    for (size_t i = 0; i < static_cast<size_t>(num_clases_); i++) {
+        margenes[i] = sesgo_inicial_[i];
+    }
+
+    for (size_t i = 0; i < arboles_.size(); i++) {
+        int clase = static_cast<int>(i % static_cast<size_t>(num_clases_));
+        margenes[clase] += evaluar_arbol(arboles_[i], caracteristicas);
+    }
+
+    if (num_clases_ <= 1) {
+        double probabilidad_ataque = 1.0 / (1.0 + std::exp(-margenes[0]));
+        if (probabilidad_ataque > 0.5) {
+            resultado.clase_predicha = "ataque";
+            resultado.probabilidad_clase_predicha = probabilidad_ataque;
+        } else {
+            resultado.clase_predicha = "benigno";
+            resultado.probabilidad_clase_predicha = 1.0 - probabilidad_ataque;
+        }
+        return resultado;
+    }
+
+    double maximo = *std::max_element(margenes.begin(), margenes.end());
+    std::vector<double> exponenciales(num_clases_);
+    double suma = 0.0;
+    for (int i = 0; i < num_clases_; i++) {
+        exponenciales[i] = std::exp(margenes[i] - maximo);
+        suma += exponenciales[i];
+    }
+
+    int indice_maximo = 0;
+    double probabilidad_maxima = 0.0;
+    for (int i = 0; i < num_clases_; i++) {
+        double probabilidad = exponenciales[i] / suma;
+        if (probabilidad > probabilidad_maxima) {
+            probabilidad_maxima = probabilidad;
+            indice_maximo = i;
+        }
+    }
+
+    resultado.clase_predicha = indice_maximo < static_cast<int>(nombres_clases_.size())
+                                     ? nombres_clases_[indice_maximo]
+                                     : ("clase_" + std::to_string(indice_maximo));
+    resultado.probabilidad_clase_predicha = probabilidad_maxima;
+    return resultado;
+}
+
 VeredictoClasificacion DetectorAprendizajeAutomatico::clasificar(const EventoRed& evento) {
     VeredictoClasificacion veredicto;
 
@@ -166,16 +215,26 @@ VeredictoClasificacion DetectorAprendizajeAutomatico::clasificar(const EventoRed
         return veredicto;
     }
 
-    double probabilidad = calcular_probabilidad(evento);
+    ResultadoModelo resultado = evaluar_modelo(evento);
+
+    if (resultado.clase_predicha == "benigno") {
+        return veredicto;
+    }
+
     long total_paquetes_flujo = evento.orig_pkts_flujo + evento.resp_pkts_flujo;
     double duracion_segura = evento.duracion > 0.001 ? evento.duracion : 0.001;
     double pps_flujo = static_cast<double>(total_paquetes_flujo) / duracion_segura;
 
-    bool supera_probabilidad = probabilidad > umbral_probabilidad_alerta_;
-    bool supera_volumen = total_paquetes_flujo >= paquetes_minimos_alerta_;
-    bool supera_tasa = pps_flujo >= pps_minimo_alerta_;
+    bool supera_probabilidad = resultado.probabilidad_clase_predicha > umbral_probabilidad_alerta_;
 
-    if (!(supera_probabilidad && supera_volumen && supera_tasa)) {
+    bool cumple_volumen = true;
+    if (clase_requiere_gate_volumen(resultado.clase_predicha)) {
+        bool supera_volumen = total_paquetes_flujo >= paquetes_minimos_alerta_;
+        bool supera_tasa = pps_flujo >= pps_minimo_alerta_;
+        cumple_volumen = supera_volumen && supera_tasa;
+    }
+
+    if (!(supera_probabilidad && cumple_volumen)) {
         return veredicto;
     }
 
@@ -190,50 +249,44 @@ VeredictoClasificacion DetectorAprendizajeAutomatico::clasificar(const EventoRed
     ultima_alerta_por_flujo_[clave_flujo] = ahora;
 
     veredicto.es_amenaza = true;
-    veredicto.etiqueta = "ataque";
-    veredicto.confianza = probabilidad;
+    veredicto.etiqueta = resultado.clase_predicha;
+    veredicto.confianza = resultado.probabilidad_clase_predicha;
 
     return veredicto;
 }
 
-VeredictoClasificacion DetectorAprendizajeAutomatico::diagnosticar(const EventoRed& evento) {
-    VeredictoClasificacion veredicto;
+DiagnosticoIA DetectorAprendizajeAutomatico::diagnosticar(const EventoRed& evento) const {
+    DiagnosticoIA diagnostico;
 
     if (!modelo_cargado_) {
-        return veredicto;
+        return diagnostico;
     }
 
     if (evento.protocolo != PROTOCOLO_TCP && evento.protocolo != PROTOCOLO_UDP) {
-        return veredicto;
+        return diagnostico;
     }
 
-    double probabilidad = calcular_probabilidad(evento);
+    ResultadoModelo resultado = evaluar_modelo(evento);
+
     long total_paquetes_flujo = evento.orig_pkts_flujo + evento.resp_pkts_flujo;
     double duracion_segura = evento.duracion > 0.001 ? evento.duracion : 0.001;
     double pps_flujo = static_cast<double>(total_paquetes_flujo) / duracion_segura;
 
-    static std::atomic<long> contador_diagnostico{0};
-    long contador_actual = contador_diagnostico.fetch_add(1);
-    if (probabilidad > 0.3 && contador_actual % 20 == 0) {
-        Bitacora::instancia().registrar_info(
-            "DIAGNOSTICO_IA probabilidad=" + std::to_string(probabilidad) +
-            " orig_pkts_flujo=" + std::to_string(evento.orig_pkts_flujo) +
-            " orig_ip_bytes_flujo=" + std::to_string(evento.orig_ip_bytes_flujo) +
-            " resp_pkts_flujo=" + std::to_string(evento.resp_pkts_flujo) +
-            " resp_ip_bytes_flujo=" + std::to_string(evento.resp_ip_bytes_flujo) +
-            " duracion=" + std::to_string(evento.duracion) +
-            " pps_flujo=" + std::to_string(pps_flujo));
+    bool supera_probabilidad = resultado.probabilidad_clase_predicha > umbral_probabilidad_alerta_;
+
+    bool cumple_volumen = true;
+    if (clase_requiere_gate_volumen(resultado.clase_predicha)) {
+        bool supera_volumen = total_paquetes_flujo >= paquetes_minimos_alerta_;
+        bool supera_tasa = pps_flujo >= pps_minimo_alerta_;
+        cumple_volumen = supera_volumen && supera_tasa;
     }
 
-    bool supera_probabilidad = probabilidad > umbral_probabilidad_alerta_;
-    bool supera_volumen = total_paquetes_flujo >= paquetes_minimos_alerta_;
-    bool supera_tasa = pps_flujo >= pps_minimo_alerta_;
+    diagnostico.evaluado = true;
+    diagnostico.probabilidad = resultado.probabilidad_clase_predicha;
+    diagnostico.tipo_predicho = resultado.clase_predicha;
+    diagnostico.es_amenaza = resultado.clase_predicha != "benigno" && supera_probabilidad && cumple_volumen;
 
-    veredicto.es_amenaza = supera_probabilidad && supera_volumen && supera_tasa;
-    veredicto.etiqueta = veredicto.es_amenaza ? "ataque" : "";
-    veredicto.confianza = probabilidad;
-
-    return veredicto;
+    return diagnostico;
 }
 
 std::string DetectorAprendizajeAutomatico::nombre() const { return "aprendizaje_automatico"; }

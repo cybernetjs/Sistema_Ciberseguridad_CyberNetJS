@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from collections import Counter
 from imblearn.over_sampling import SMOTE
 from sklearn.feature_selection import SelectKBest, f_classif
 from sklearn.preprocessing import LabelEncoder, StandardScaler
@@ -41,8 +42,21 @@ def normalizar(X_entrenamiento, X_prueba):
     return X_entrenamiento_normalizado, X_prueba_normalizado, escalador
 
 
-def balancear(X, y):
-    smote = SMOTE(random_state=42)
+def balancear(X, y, techo_minoritarias=50000):
+    conteo = Counter(y)
+    estrategia = {clase: techo_minoritarias for clase, cantidad in conteo.items() if cantidad < techo_minoritarias}
+
+    if not estrategia:
+        return X, y
+
+    k_vecinos = min(5, min(conteo[c] for c in estrategia) - 1)
+    if k_vecinos < 1:
+        estrategia = {c: v for c, v in estrategia.items() if conteo[c] > 1}
+        if not estrategia:
+            return X, y
+        k_vecinos = 1
+
+    smote = SMOTE(random_state=42, sampling_strategy=estrategia, k_neighbors=k_vecinos)
     return smote.fit_resample(X, y)
 
 
