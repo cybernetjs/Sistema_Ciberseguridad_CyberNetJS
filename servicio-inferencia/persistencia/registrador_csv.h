@@ -14,7 +14,7 @@ public:
 
     void registrar(const EventoRed& evento, const VeredictoClasificacion& veredicto,
                     const std::string& clasificador, double tiempo_respuesta_ms,
-                    const VeredictoClasificacion& veredicto_ia_diagnostico) override;
+                    const DiagnosticoIA& veredicto_ia_diagnostico) override;
 
     bool listo() const;
 

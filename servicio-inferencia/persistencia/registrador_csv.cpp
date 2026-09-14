@@ -20,7 +20,7 @@ const std::string ENCABEZADO_ESPERADO =
     "conteo_servicio_origen,conteo_destino_reciente,"
     "orig_pkts_flujo,orig_ip_bytes_flujo,resp_pkts_flujo,resp_ip_bytes_flujo,missed_bytes,"
     "clasificador,es_amenaza,etiqueta,confianza,tiempo_respuesta_ms,"
-    "veredicto_ia_es_amenaza,veredicto_ia_confianza,"
+    "veredicto_ia_es_amenaza,veredicto_ia_confianza,veredicto_ia_tipo,"
     "conexiones_origen_5s,puertos_distintos_origen_5s,ips_distintas_origen_60s,conexiones_mismo_destino_300s";
 
 std::string campo_csv(const std::string& valor) {
@@ -91,7 +91,7 @@ void RegistradorCsv::escribir_encabezado() {
 
 void RegistradorCsv::registrar(const EventoRed& evento, const VeredictoClasificacion& veredicto,
                                 const std::string& clasificador, double tiempo_respuesta_ms,
-                                const VeredictoClasificacion& veredicto_ia_diagnostico) {
+                                const DiagnosticoIA& veredicto_ia_diagnostico) {
     std::lock_guard<std::mutex> bloqueo(mutex_);
     if (!archivo_.is_open()) {
         return;
@@ -135,7 +135,8 @@ void RegistradorCsv::registrar(const EventoRed& evento, const VeredictoClasifica
          << veredicto.confianza << ','
          << tiempo_respuesta_ms << ','
          << (veredicto_ia_diagnostico.es_amenaza ? 1 : 0) << ','
-         << veredicto_ia_diagnostico.confianza << ','
+         << veredicto_ia_diagnostico.probabilidad << ','
+         << campo_csv(veredicto_ia_diagnostico.tipo_predicho) << ','
          << evento.conexiones_origen_5s << ','
          << evento.puertos_distintos_origen_5s << ','
          << evento.ips_distintas_origen_60s << ','

@@ -55,7 +55,7 @@ void CanalizadorEventos::procesar(const EventoRed& evento_entrante) {
         }
     }
 
-    VeredictoClasificacion veredicto_ia_diagnostico;
+    DiagnosticoIA veredicto_ia_diagnostico;
     if (detector_diagnostico_ia_ != nullptr) {
         veredicto_ia_diagnostico = detector_diagnostico_ia_->diagnosticar(evento);
     }
