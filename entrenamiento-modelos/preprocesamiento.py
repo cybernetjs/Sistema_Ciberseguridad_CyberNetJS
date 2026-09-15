@@ -6,8 +6,15 @@ from sklearn.feature_selection import SelectKBest, f_classif
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 
 
+MAPA_PROTOCOLOS = {"tcp": 6, "udp": 17, "icmp": 1, "icmp6": 58}
+
+
 def limpiar(df, columna_etiqueta):
     df = df.drop_duplicates()
+    if "proto" in df.columns:
+        df["proto"] = df["proto"].apply(
+            lambda valor: MAPA_PROTOCOLOS.get(str(valor).strip().lower(), valor)
+        )
     for columna in df.columns:
         if columna == columna_etiqueta:
             continue
