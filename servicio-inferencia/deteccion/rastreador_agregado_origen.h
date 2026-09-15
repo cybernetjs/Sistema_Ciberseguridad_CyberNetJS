@@ -28,8 +28,11 @@ private:
         int protocolo = 0;
     };
 
+    std::string construir_clave_flujo(const EventoRed& evento) const;
+
     std::mutex mutex_;
     std::unordered_map<std::string, std::deque<RegistroConexion>> historiales_;
+    std::unordered_map<std::string, double> ultima_actividad_por_flujo_;
 };
 
 }
