@@ -14,6 +14,12 @@ namespace {
 constexpr int PROTOCOLO_TCP = 6;
 constexpr int PROTOCOLO_UDP = 17;
 
+constexpr double CAP_ORIG_IP_BYTES = 2500000.0;
+constexpr double CAP_RESP_IP_BYTES = 2500000.0;
+constexpr double CAP_ORIG_PKTS = 15000.0;
+constexpr double CAP_RESP_PKTS = 15000.0;
+constexpr double CAP_DURACION_SEGUNDOS = 300.0;
+
 void parsear_nodo(const nlohmann::json& nodo_json, ArbolXgboost& arbol) {
     NodoArbol nodo;
     int id = nodo_json.at("nodeid").get<int>();
@@ -76,6 +82,12 @@ std::vector<double> DetectorAprendizajeAutomatico::construir_vector_caracteristi
     crudo.reserve(orden_caracteristicas_.size());
 
     double duracion_segura = evento.duracion > 0.001 ? evento.duracion : 0.001;
+    duracion_segura = std::min(duracion_segura, CAP_DURACION_SEGUNDOS);
+
+    double orig_pkts_recortado = std::min(static_cast<double>(evento.orig_pkts_flujo), CAP_ORIG_PKTS);
+    double resp_pkts_recortado = std::min(static_cast<double>(evento.resp_pkts_flujo), CAP_RESP_PKTS);
+    double orig_ip_bytes_recortado = std::min(static_cast<double>(evento.orig_ip_bytes_flujo), CAP_ORIG_IP_BYTES);
+    double resp_ip_bytes_recortado = std::min(static_cast<double>(evento.resp_ip_bytes_flujo), CAP_RESP_IP_BYTES);
 
     for (const std::string& nombre : orden_caracteristicas_) {
         double valor = 0.0;
@@ -86,19 +98,19 @@ std::vector<double> DetectorAprendizajeAutomatico::construir_vector_caracteristi
         } else if (nombre == "missed_bytes") {
             valor = static_cast<double>(evento.missed_bytes);
         } else if (nombre == "orig_pkts") {
-            valor = static_cast<double>(evento.orig_pkts_flujo);
+            valor = orig_pkts_recortado;
         } else if (nombre == "orig_ip_bytes") {
-            valor = static_cast<double>(evento.orig_ip_bytes_flujo);
+            valor = orig_ip_bytes_recortado;
         } else if (nombre == "resp_pkts") {
-            valor = static_cast<double>(evento.resp_pkts_flujo);
+            valor = resp_pkts_recortado;
         } else if (nombre == "resp_ip_bytes") {
-            valor = static_cast<double>(evento.resp_ip_bytes_flujo);
+            valor = resp_ip_bytes_recortado;
         } else if (nombre == "duration") {
             valor = duracion_segura;
         } else if (nombre == "orig_bytes") {
-            valor = static_cast<double>(evento.orig_ip_bytes_flujo);
+            valor = orig_ip_bytes_recortado;
         } else if (nombre == "resp_bytes") {
-            valor = static_cast<double>(evento.resp_ip_bytes_flujo);
+            valor = resp_ip_bytes_recortado;
         } else if (nombre == "proto") {
             valor = static_cast<double>(evento.protocolo);
         } else if (nombre == "conexiones_origen_5s") {
@@ -150,6 +162,10 @@ std::string DetectorAprendizajeAutomatico::construir_clave_flujo(const EventoRed
 
 bool DetectorAprendizajeAutomatico::clase_requiere_gate_volumen(const std::string& clase) const {
     return clase == "ddos" || clase == "dos";
+}
+
+double DetectorAprendizajeAutomatico::umbral_aplicable_para_clase(const std::string& clase) const {
+    return clase_requiere_gate_volumen(clase) ? umbral_probabilidad_alerta_volumen_ : umbral_probabilidad_alerta_;
 }
 
 DetectorAprendizajeAutomatico::ResultadoModelo DetectorAprendizajeAutomatico::evaluar_modelo(const EventoRed& evento) const {
@@ -225,7 +241,7 @@ VeredictoClasificacion DetectorAprendizajeAutomatico::clasificar(const EventoRed
     double duracion_segura = evento.duracion > 0.001 ? evento.duracion : 0.001;
     double pps_flujo = static_cast<double>(total_paquetes_flujo) / duracion_segura;
 
-    bool supera_probabilidad = resultado.probabilidad_clase_predicha > umbral_probabilidad_alerta_;
+    bool supera_probabilidad = resultado.probabilidad_clase_predicha > umbral_aplicable_para_clase(resultado.clase_predicha);
 
     bool cumple_volumen = true;
     if (clase_requiere_gate_volumen(resultado.clase_predicha)) {
@@ -272,7 +288,7 @@ DiagnosticoIA DetectorAprendizajeAutomatico::diagnosticar(const EventoRed& event
     double duracion_segura = evento.duracion > 0.001 ? evento.duracion : 0.001;
     double pps_flujo = static_cast<double>(total_paquetes_flujo) / duracion_segura;
 
-    bool supera_probabilidad = resultado.probabilidad_clase_predicha > umbral_probabilidad_alerta_;
+    bool supera_probabilidad = resultado.probabilidad_clase_predicha > umbral_aplicable_para_clase(resultado.clase_predicha);
 
     bool cumple_volumen = true;
     if (clase_requiere_gate_volumen(resultado.clase_predicha)) {
