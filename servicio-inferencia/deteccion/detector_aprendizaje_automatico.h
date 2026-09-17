@@ -48,6 +48,7 @@ private:
     std::string construir_clave_flujo(const EventoRed& evento) const;
     bool clase_requiere_gate_volumen(const std::string& clase) const;
     double umbral_aplicable_para_clase(const std::string& clase) const;
+    bool cumple_gate_volumen(const EventoRed& evento) const;
 
     std::atomic<bool> modelo_cargado_{false};
     std::string ruta_modelo_;
@@ -63,6 +64,8 @@ private:
     double umbral_probabilidad_alerta_volumen_ = 0.55;
     long paquetes_minimos_alerta_ = 30;
     double pps_minimo_alerta_ = 150.0;
+    long conexiones_mismo_destino_minimas_ = 50;
+    long conexiones_origen_minimas_ = 20;
     double cooldown_alerta_segundos_ = 60.0;
     std::vector<ArbolXgboost> arboles_;
     std::unordered_map<std::string, double> ultima_alerta_por_flujo_;

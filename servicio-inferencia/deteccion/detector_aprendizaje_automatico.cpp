@@ -168,6 +168,18 @@ double DetectorAprendizajeAutomatico::umbral_aplicable_para_clase(const std::str
     return clase_requiere_gate_volumen(clase) ? umbral_probabilidad_alerta_volumen_ : umbral_probabilidad_alerta_;
 }
 
+bool DetectorAprendizajeAutomatico::cumple_gate_volumen(const EventoRed& evento) const {
+    long total_paquetes_flujo = evento.orig_pkts_flujo + evento.resp_pkts_flujo;
+    double duracion_segura = evento.duracion > 0.001 ? evento.duracion : 0.001;
+    double pps_flujo = static_cast<double>(total_paquetes_flujo) / duracion_segura;
+
+    bool supera_volumen_flujo = total_paquetes_flujo >= paquetes_minimos_alerta_ && pps_flujo >= pps_minimo_alerta_;
+    bool supera_volumen_conexiones = evento.conexiones_mismo_destino_300s >= conexiones_mismo_destino_minimas_ ||
+                                      evento.conexiones_origen_5s >= conexiones_origen_minimas_;
+
+    return supera_volumen_flujo || supera_volumen_conexiones;
+}
+
 DetectorAprendizajeAutomatico::ResultadoModelo DetectorAprendizajeAutomatico::evaluar_modelo(const EventoRed& evento) const {
     ResultadoModelo resultado;
 
@@ -237,17 +249,11 @@ VeredictoClasificacion DetectorAprendizajeAutomatico::clasificar(const EventoRed
         return veredicto;
     }
 
-    long total_paquetes_flujo = evento.orig_pkts_flujo + evento.resp_pkts_flujo;
-    double duracion_segura = evento.duracion > 0.001 ? evento.duracion : 0.001;
-    double pps_flujo = static_cast<double>(total_paquetes_flujo) / duracion_segura;
-
     bool supera_probabilidad = resultado.probabilidad_clase_predicha > umbral_aplicable_para_clase(resultado.clase_predicha);
 
     bool cumple_volumen = true;
     if (clase_requiere_gate_volumen(resultado.clase_predicha)) {
-        bool supera_volumen = total_paquetes_flujo >= paquetes_minimos_alerta_;
-        bool supera_tasa = pps_flujo >= pps_minimo_alerta_;
-        cumple_volumen = supera_volumen && supera_tasa;
+        cumple_volumen = cumple_gate_volumen(evento);
     }
 
     if (!(supera_probabilidad && cumple_volumen)) {
@@ -284,17 +290,11 @@ DiagnosticoIA DetectorAprendizajeAutomatico::diagnosticar(const EventoRed& event
 
     ResultadoModelo resultado = evaluar_modelo(evento);
 
-    long total_paquetes_flujo = evento.orig_pkts_flujo + evento.resp_pkts_flujo;
-    double duracion_segura = evento.duracion > 0.001 ? evento.duracion : 0.001;
-    double pps_flujo = static_cast<double>(total_paquetes_flujo) / duracion_segura;
-
     bool supera_probabilidad = resultado.probabilidad_clase_predicha > umbral_aplicable_para_clase(resultado.clase_predicha);
 
     bool cumple_volumen = true;
     if (clase_requiere_gate_volumen(resultado.clase_predicha)) {
-        bool supera_volumen = total_paquetes_flujo >= paquetes_minimos_alerta_;
-        bool supera_tasa = pps_flujo >= pps_minimo_alerta_;
-        cumple_volumen = supera_volumen && supera_tasa;
+        cumple_volumen = cumple_gate_volumen(evento);
     }
 
     diagnostico.evaluado = true;
