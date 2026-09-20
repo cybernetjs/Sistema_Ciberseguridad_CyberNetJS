@@ -12,7 +12,6 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
-            <RowDefinition Height="220"/>
         </Grid.RowDefinitions>
 
         <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
@@ -27,57 +26,33 @@
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
 
-            <Border Grid.Column="0" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" CornerRadius="8" Padding="16">
-                <StackPanel Spacing="4">
+            <Border Grid.Column="0" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" CornerRadius="8" Padding="20">
+                <StackPanel Spacing="6">
                     <TextBlock Text="Eventos procesados" Opacity="0.7"/>
-                    <TextBlock Text="{x:Bind ModeloVista.TotalEventos, Mode=OneWay}" FontSize="26" FontWeight="Bold"/>
+                    <TextBlock Text="{x:Bind ModeloVista.TotalEventos, Mode=OneWay}" FontSize="32" FontWeight="Bold"/>
                 </StackPanel>
             </Border>
 
-            <Border Grid.Column="1" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" CornerRadius="8" Padding="16">
-                <StackPanel Spacing="4">
+            <Border Grid.Column="1" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" CornerRadius="8" Padding="20">
+                <StackPanel Spacing="6">
                     <TextBlock Text="Alertas generadas" Opacity="0.7"/>
-                    <TextBlock Text="{x:Bind ModeloVista.TotalAlertas, Mode=OneWay}" FontSize="26" FontWeight="Bold" Foreground="{ThemeResource SystemFillColorCriticalBrush}"/>
+                    <TextBlock Text="{x:Bind ModeloVista.TotalAlertas, Mode=OneWay}" FontSize="32" FontWeight="Bold" Foreground="{ThemeResource SystemFillColorCriticalBrush}"/>
                 </StackPanel>
             </Border>
 
-            <Border Grid.Column="2" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" CornerRadius="8" Padding="16">
-                <StackPanel Spacing="4">
+            <Border Grid.Column="2" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" CornerRadius="8" Padding="20">
+                <StackPanel Spacing="6">
                     <TextBlock Text="Tiempo resp. promedio" Opacity="0.7"/>
-                    <TextBlock Text="{x:Bind ModeloVista.TiempoRespuestaPromedioTexto, Mode=OneWay}" FontSize="26" FontWeight="Bold"/>
+                    <TextBlock Text="{x:Bind ModeloVista.TiempoRespuestaPromedioTexto, Mode=OneWay}" FontSize="32" FontWeight="Bold"/>
                 </StackPanel>
             </Border>
 
-            <Border Grid.Column="3" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" CornerRadius="8" Padding="16">
-                <StackPanel Spacing="4">
-                    <TextBlock Text="Accuracy" Opacity="0.7"/>
-                    <TextBlock Text="{x:Bind ModeloVista.AccuracyTexto, Mode=OneWay}" FontSize="26" FontWeight="Bold"/>
-                </StackPanel>
-            </Border>
-
-            <Border Grid.Column="4" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" CornerRadius="8" Padding="16">
-                <StackPanel Spacing="4">
-                    <TextBlock Text="Precision" Opacity="0.7"/>
-                    <TextBlock Text="{x:Bind ModeloVista.PrecisionTexto, Mode=OneWay}" FontSize="26" FontWeight="Bold"/>
-                </StackPanel>
-            </Border>
-
-            <Border Grid.Column="5" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" CornerRadius="8" Padding="16">
-                <StackPanel Spacing="4">
-                    <TextBlock Text="Recall" Opacity="0.7"/>
-                    <TextBlock Text="{x:Bind ModeloVista.RecallTexto, Mode=OneWay}" FontSize="26" FontWeight="Bold"/>
-                </StackPanel>
-            </Border>
-
-            <Border Grid.Column="6" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" CornerRadius="8" Padding="16">
-                <StackPanel Spacing="4">
-                    <TextBlock Text="F1-Score" Opacity="0.7"/>
-                    <TextBlock Text="{x:Bind ModeloVista.F1Texto, Mode=OneWay}" FontSize="26" FontWeight="Bold"/>
+            <Border Grid.Column="3" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" CornerRadius="8" Padding="20">
+                <StackPanel Spacing="6">
+                    <TextBlock Text="Ultima alerta" Opacity="0.7"/>
+                    <TextBlock Text="{x:Bind ModeloVista.UltimaAlertaTexto, Mode=OneWay}" FontSize="20" FontWeight="Bold" Foreground="{ThemeResource SystemFillColorCriticalBrush}" TextTrimming="CharacterEllipsis"/>
                 </StackPanel>
             </Border>
         </Grid>
@@ -141,22 +116,5 @@
                 </ListView.ItemTemplate>
             </ListView>
         </Grid>
-
-        <Border Grid.Row="3" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" CornerRadius="8" Padding="4">
-            <Grid RowSpacing="4">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="*"/>
-                </Grid.RowDefinitions>
-                <TextBlock Grid.Row="0" Text="Consola / bitacora" FontWeight="SemiBold" Margin="8,4,0,0"/>
-                <ListView Grid.Row="1" ItemsSource="{x:Bind ModeloVista.LineasLog, Mode=OneWay}">
-                    <ListView.ItemTemplate>
-                        <DataTemplate x:DataType="x:String">
-                            <TextBlock Text="{x:Bind}" FontFamily="Consolas" FontSize="12"/>
-                        </DataTemplate>
-                    </ListView.ItemTemplate>
-                </ListView>
-            </Grid>
-        </Border>
     </Grid>
 </Window>

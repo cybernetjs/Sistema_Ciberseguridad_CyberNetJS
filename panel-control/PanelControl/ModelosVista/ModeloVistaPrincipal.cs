@@ -15,7 +15,6 @@ public sealed class ModeloVistaPrincipal : INotifyPropertyChanged
 
     public ObservableCollection<RegistroEvento> Eventos { get; } = new();
     public ObservableCollection<RegistroEvento> EventosFiltrados { get; } = new();
-    public ObservableCollection<string> LineasLog { get; } = new();
 
     private bool _soloAmenazas;
     public bool SoloAmenazas
@@ -31,8 +30,6 @@ public sealed class ModeloVistaPrincipal : INotifyPropertyChanged
     }
 
     public ObservableCollection<RegistroEvento> EventosVisibles => SoloAmenazas ? EventosFiltrados : Eventos;
-
-    private const int MaximoLineasLogVisibles = 500;
 
     private int _totalEventos;
     public int TotalEventos
@@ -53,6 +50,13 @@ public sealed class ModeloVistaPrincipal : INotifyPropertyChanged
     public string TiempoRespuestaPromedioTexto => TotalEventos == 0
         ? "-"
         : $"{(_sumaTiempoRespuestaMs / TotalEventos):0.###} ms";
+
+    private string _ultimaAlertaTexto = "Sin alertas";
+    public string UltimaAlertaTexto
+    {
+        get => _ultimaAlertaTexto;
+        set => Establecer(ref _ultimaAlertaTexto, value);
+    }
 
     private string _textoEstadoConexion = "Conectando...";
     public string TextoEstadoConexion
@@ -77,62 +81,6 @@ public sealed class ModeloVistaPrincipal : INotifyPropertyChanged
     public SolidColorBrush ColorEstadoConexion =>
         new(Conectado ? Color.FromArgb(255, 34, 197, 94) : Color.FromArgb(255, 220, 38, 38));
 
-    private double _accuracy;
-    public double Accuracy
-    {
-        get => _accuracy;
-        set
-        {
-            if (Establecer(ref _accuracy, value))
-            {
-                OnPropertyChanged(nameof(AccuracyTexto));
-            }
-        }
-    }
-    public string AccuracyTexto => $"{Accuracy:0.0%}";
-
-    private double _precision;
-    public double Precision
-    {
-        get => _precision;
-        set
-        {
-            if (Establecer(ref _precision, value))
-            {
-                OnPropertyChanged(nameof(PrecisionTexto));
-            }
-        }
-    }
-    public string PrecisionTexto => $"{Precision:0.0%}";
-
-    private double _recall;
-    public double Recall
-    {
-        get => _recall;
-        set
-        {
-            if (Establecer(ref _recall, value))
-            {
-                OnPropertyChanged(nameof(RecallTexto));
-            }
-        }
-    }
-    public string RecallTexto => $"{Recall:0.0%}";
-
-    private double _f1Score;
-    public double F1Score
-    {
-        get => _f1Score;
-        set
-        {
-            if (Establecer(ref _f1Score, value))
-            {
-                OnPropertyChanged(nameof(F1Texto));
-            }
-        }
-    }
-    public string F1Texto => $"{F1Score:0.0%}";
-
     public void AgregarEventos(IReadOnlyList<RegistroEvento> nuevos)
     {
         foreach (var evento in nuevos)
@@ -142,6 +90,7 @@ public sealed class ModeloVistaPrincipal : INotifyPropertyChanged
             {
                 EventosFiltrados.Insert(0, evento);
                 TotalAlertas++;
+                UltimaAlertaTexto = $"{evento.Clasificador} | {evento.HoraTexto}";
             }
             TotalEventos++;
             _sumaTiempoRespuestaMs += evento.TiempoRespuestaMs;
@@ -158,27 +107,6 @@ public sealed class ModeloVistaPrincipal : INotifyPropertyChanged
         }
 
         OnPropertyChanged(nameof(TiempoRespuestaPromedioTexto));
-    }
-
-    public void ActualizarMetricas(MetricasModelo metricas)
-    {
-        Accuracy = metricas.Accuracy;
-        Precision = metricas.Precision;
-        Recall = metricas.Recall;
-        F1Score = metricas.F1Score;
-    }
-
-    public void AgregarLineasLog(IReadOnlyList<string> nuevas)
-    {
-        foreach (var linea in nuevas)
-        {
-            LineasLog.Insert(0, linea);
-        }
-
-        while (LineasLog.Count > MaximoLineasLogVisibles)
-        {
-            LineasLog.RemoveAt(LineasLog.Count - 1);
-        }
     }
 
     private bool Establecer<T>(ref T campo, T valor, [CallerMemberName] string? nombrePropiedad = null)
