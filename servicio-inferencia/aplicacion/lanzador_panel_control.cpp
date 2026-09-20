@@ -25,8 +25,6 @@ std::string derivar_ruta_metricas(const std::string& ruta_modelo) {
 
     fs::path carpeta_modelo = modelo.has_parent_path() ? modelo.parent_path() : fs::path(".");
 
-    // Diseno tipico del repositorio: modelos-arboles/modelo_x_arboles.json
-    // junto a modelos-entrenados/modelo_x_metricas.json (carpetas hermanas).
     if (carpeta_modelo.filename() == "modelos-arboles") {
         fs::path candidata = carpeta_modelo.parent_path() / "modelos-entrenados" / nombre_metricas;
         if (fs::exists(candidata)) {
@@ -39,9 +37,6 @@ std::string derivar_ruta_metricas(const std::string& ruta_modelo) {
         return misma_carpeta.string();
     }
 
-    // No se encontro el archivo: se devuelve la ruta mas probable de todas
-    // formas (misma carpeta que el modelo). panel-control simplemente
-    // esperara a que el archivo aparezca.
     return misma_carpeta.string();
 }
 
@@ -60,20 +55,28 @@ std::string obtener_carpeta_ejecutable() {
     return fs::path(buffer).parent_path().string();
 }
 
-// Rutas candidatas, en orden de preferencia, donde puede estar PanelControl.exe.
-// Cubre tanto el despliegue final (el .exe del panel copiado junto al de
-// servicio_inferencia, con o sin subcarpeta) como la carpeta de compilacion
-// de desarrollo (panel-control/PanelControl/bin/...).
 std::vector<fs::path> rutas_candidatas_panel(const fs::path& carpeta_exe) {
-    return {
+    std::vector<fs::path> candidatas = {
         carpeta_exe / "PanelControl.exe",
         carpeta_exe / "PanelControl" / "PanelControl.exe",
         carpeta_exe / "panel-control" / "PanelControl.exe",
-        carpeta_exe / ".." / "panel-control" / "PanelControl" / "bin" / "x64" / "Debug" /
-            "net8.0-windows10.0.19041.0" / "PanelControl.exe",
-        carpeta_exe / ".." / ".." / "panel-control" / "PanelControl" / "bin" / "x64" / "Debug" /
-            "net8.0-windows10.0.19041.0" / "PanelControl.exe",
     };
+
+    std::vector<std::string> plataformas = {"x64", "ARM64"};
+    std::vector<std::string> configuraciones = {"Debug", "Release"};
+
+    fs::path raiz = carpeta_exe;
+    for (int subida = 1; subida <= 5; ++subida) {
+        raiz = raiz.parent_path();
+        for (const auto& plataforma : plataformas) {
+            for (const auto& config : configuraciones) {
+                candidatas.push_back(raiz / "panel-control" / "PanelControl" / "bin" / plataforma / config /
+                                      "net8.0-windows10.0.19041.0" / "PanelControl.exe");
+            }
+        }
+    }
+
+    return candidatas;
 }
 
 std::string ruta_absoluta_o_igual(const std::string& ruta) {
@@ -89,8 +92,6 @@ bool lanzar_panel_control(const std::string& ruta_csv, const std::string& ruta_m
     std::string carpeta_exe_str = obtener_carpeta_ejecutable();
     fs::path carpeta_exe(carpeta_exe_str);
 
-    // Permite forzar la ubicacion exacta sin tocar el codigo, por ejemplo si
-    // PanelControl.exe vive en una carpeta que no esta entre las candidatas.
     fs::path ruta_panel;
     if (const char* forzada = std::getenv("SDI_RUTA_PANEL_CONTROL")) {
         ruta_panel = forzada;
@@ -106,17 +107,12 @@ bool lanzar_panel_control(const std::string& ruta_csv, const std::string& ruta_m
     if (ruta_panel.empty() || !fs::exists(ruta_panel)) {
         if (motivo_si_fallo) {
             *motivo_si_fallo =
-                "No se encontro PanelControl.exe junto a servicio_inferencia.exe. "
-                "Copia PanelControl.exe (con sus archivos de publicacion) en la misma carpeta, "
+                "No se encontro PanelControl.exe. Copia PanelControl.exe junto a servicio_inferencia.exe, "
                 "o define la variable de entorno SDI_RUTA_PANEL_CONTROL con la ruta exacta.";
         }
         return false;
     }
 
-    // El panel lee estas variables de entorno para saber que archivos seguir
-    // (ver panel-control/PanelControl/MainWindow.xaml.cs). Se pasan como
-    // rutas absolutas porque el panel puede arrancar con otro directorio de
-    // trabajo.
     SetEnvironmentVariableA("PANEL_RUTA_CSV", ruta_absoluta_o_igual(ruta_csv).c_str());
     SetEnvironmentVariableA("PANEL_RUTA_METRICAS", ruta_absoluta_o_igual(ruta_metricas).c_str());
     SetEnvironmentVariableA("PANEL_RUTA_LOG", ruta_absoluta_o_igual(ruta_log).c_str());
@@ -132,14 +128,12 @@ bool lanzar_panel_control(const std::string& ruta_csv, const std::string& ruta_m
     std::string carpeta_panel = ruta_panel.parent_path().string();
 
     BOOL creado = CreateProcessA(
-        ruta_panel.string().c_str(),   // aplicacion
-        buffer_comando.data(),         // linea de comandos (modificable)
-        nullptr, nullptr,              // atributos de seguridad
-        FALSE,                         // no hace falta heredar handles; las variables de entorno
-                                        // ya quedaron puestas con SetEnvironmentVariableA y se
-                                        // heredan igual porque lpEnvironment es nullptr
-        0,                             // sin banderas especiales
-        nullptr,                       // hereda el entorno del proceso actual
+        ruta_panel.string().c_str(),
+        buffer_comando.data(),
+        nullptr, nullptr,
+        FALSE,
+        0,
+        nullptr,
         carpeta_panel.empty() ? nullptr : carpeta_panel.c_str(),
         &info_inicio, &info_proceso);
 
