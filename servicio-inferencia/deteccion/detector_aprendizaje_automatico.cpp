@@ -245,7 +245,7 @@ VeredictoClasificacion DetectorAprendizajeAutomatico::clasificar(const EventoRed
 
     ResultadoModelo resultado = evaluar_modelo(evento);
 
-    if (resultado.clase_predicha == "benigno") {
+    if (resultado.clase_predicha == "benigno" || resultado.clase_predicha == "mitm") {
         return veredicto;
     }
 
