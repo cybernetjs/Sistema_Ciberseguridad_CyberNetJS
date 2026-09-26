@@ -63,7 +63,10 @@
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
 
-            <ToggleSwitch Grid.Row="0" HorizontalAlignment="Left" OnContent="Mostrando solo amenazas" OffContent="Mostrando todos los eventos" IsOn="{x:Bind ModeloVista.SoloAmenazas, Mode=TwoWay}"/>
+            <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="24">
+                <ToggleSwitch HorizontalAlignment="Left" OnContent="Mostrando solo amenazas" OffContent="Mostrando todos los eventos" IsOn="{x:Bind ModeloVista.SoloAmenazas, Mode=TwoWay}"/>
+                <ToggleSwitch HorizontalAlignment="Left" OnContent="Mostrando solo aprendizaje automatico" OffContent="Filtro de aprendizaje automatico desactivado" IsOn="{x:Bind ModeloVista.SoloIa, Mode=TwoWay}"/>
+            </StackPanel>
 
             <ListView Grid.Row="1" ItemsSource="{x:Bind ModeloVista.EventosVisibles, Mode=OneWay}">
                 <ListView.HeaderTemplate>

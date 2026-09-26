@@ -10,11 +10,13 @@ namespace PanelControl.ModelosVista;
 public sealed class ModeloVistaPrincipal : INotifyPropertyChanged
 {
     private const int MaximoEventosVisibles = 200;
+    private const string NombreClasificadorIa = "aprendizaje_automatico";
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
     public ObservableCollection<RegistroEvento> Eventos { get; } = new();
     public ObservableCollection<RegistroEvento> EventosFiltrados { get; } = new();
+    public ObservableCollection<RegistroEvento> EventosIa { get; } = new();
 
     private bool _soloAmenazas;
     public bool SoloAmenazas
@@ -29,7 +31,34 @@ public sealed class ModeloVistaPrincipal : INotifyPropertyChanged
         }
     }
 
-    public ObservableCollection<RegistroEvento> EventosVisibles => SoloAmenazas ? EventosFiltrados : Eventos;
+    private bool _soloIa;
+    public bool SoloIa
+    {
+        get => _soloIa;
+        set
+        {
+            if (Establecer(ref _soloIa, value))
+            {
+                OnPropertyChanged(nameof(EventosVisibles));
+            }
+        }
+    }
+
+    public ObservableCollection<RegistroEvento> EventosVisibles
+    {
+        get
+        {
+            if (SoloIa)
+            {
+                return EventosIa;
+            }
+            if (SoloAmenazas)
+            {
+                return EventosFiltrados;
+            }
+            return Eventos;
+        }
+    }
 
     private int _totalEventos;
     public int TotalEventos
@@ -91,6 +120,11 @@ public sealed class ModeloVistaPrincipal : INotifyPropertyChanged
                 EventosFiltrados.Insert(0, evento);
                 TotalAlertas++;
                 UltimaAlertaTexto = $"{evento.Clasificador} | {evento.HoraTexto}";
+
+                if (evento.Clasificador == NombreClasificadorIa)
+                {
+                    EventosIa.Insert(0, evento);
+                }
             }
             TotalEventos++;
             _sumaTiempoRespuestaMs += evento.TiempoRespuestaMs;
@@ -104,6 +138,11 @@ public sealed class ModeloVistaPrincipal : INotifyPropertyChanged
         while (EventosFiltrados.Count > MaximoEventosVisibles)
         {
             EventosFiltrados.RemoveAt(EventosFiltrados.Count - 1);
+        }
+
+        while (EventosIa.Count > MaximoEventosVisibles)
+        {
+            EventosIa.RemoveAt(EventosIa.Count - 1);
         }
 
         OnPropertyChanged(nameof(TiempoRespuestaPromedioTexto));
